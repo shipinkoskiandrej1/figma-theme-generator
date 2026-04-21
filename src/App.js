@@ -12,7 +12,6 @@ import Dashboard from "./components/Dashboard";
 import { isValidHex } from "./utils/colorUtils";
 import { supabase } from "./lib/supabase";
 import { C } from "./utils/theme";
-import { BookmarkPlus } from "lucide-react";
 
 const DEFAULT_COLORS = {
   primary:   { hex: "#6366F1", input: "#6366F1" },
@@ -187,52 +186,14 @@ Return ONLY valid JSON, no markdown, no comments:
       <div style={{ display: 'flex', gap: 16, padding: '20px 20px 80px', alignItems: 'flex-start' }}>
         {/* Left: token table */}
         <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Save button */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <button
-              onClick={() => { setSaveError(null); setShowSaveModal(true); }}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 6,
-                padding: '6px 12px', height: 30,
-                background: 'transparent', border: `1px solid ${C.b3}`,
-                borderRadius: 4, fontSize: 11, fontWeight: 500, fontFamily: C.sans,
-                color: C.t3, cursor: 'pointer', transition: 'all .15s',
-              }}
-              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
-              onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
-            >
-              <BookmarkPlus size={11} />
-              Save to Dashboard
-            </button>
-            {saveError && (
-              <span style={{ fontSize: 11, color: '#EF4444', fontFamily: C.sans }}>{saveError}</span>
-            )}
-          </div>
+          {saveError && (
+            <span style={{ fontSize: 11, color: '#EF4444', fontFamily: C.sans }}>{saveError}</span>
+          )}
           <VariableTable theme={theme} onEdit={updateThemeToken} />
         </div>
 
-        {/* Right: proportion + wcag */}
+        {/* Right: wcag */}
         <div style={{ width: 300, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {/* Proportion bar panel */}
-          <div style={{ background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 4, overflow: 'hidden' }}>
-            <div style={{
-              padding: '9px 14px', borderBottom: `1px solid ${C.b2}`,
-              fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em',
-              textTransform: 'uppercase', fontFamily: C.sans,
-              borderTop: `2px solid ${C.accent}`,
-            }}>
-              60 / 30 / 10 Rule
-            </div>
-            <div style={{ padding: 14 }}>
-              <ProportionBar
-                primary={colors.primary.hex}
-                secondary={colors.secondary.hex}
-                tertiary={colors.tertiary.hex}
-              />
-            </div>
-          </div>
-
-          {/* WCAG checker panel */}
           <div style={{ background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 4, overflow: 'hidden' }}>
             <div style={{
               padding: '9px 14px', borderBottom: `1px solid ${C.b2}`,
@@ -323,7 +284,20 @@ Return ONLY valid JSON, no markdown, no comments:
         onCompanyLogoChange={setCompanyLogo}
         loading={loading}
         onGenerate={generate}
+        generated={!!theme}
+        onSave={() => { setSaveError(null); setShowSaveModal(true); }}
       />
+
+      {/* 60/30/10 proportion bar — full width, shown when theme exists */}
+      {theme && (
+        <div style={{ borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0, padding: '12px 20px' }}>
+          <ProportionBar
+            primary={colors.primary.hex}
+            secondary={colors.secondary.hex}
+            tertiary={colors.tertiary.hex}
+          />
+        </div>
+      )}
 
       {/* Error banner */}
       {errorBanner}

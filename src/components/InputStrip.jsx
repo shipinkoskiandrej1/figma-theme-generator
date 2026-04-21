@@ -1,4 +1,4 @@
-import { RefreshCw } from "lucide-react";
+import { RefreshCw, BookmarkPlus } from "lucide-react";
 import { C } from "../utils/theme";
 import { isValidHex } from "../utils/colorUtils";
 
@@ -65,7 +65,8 @@ export default function InputStrip({
   mood, onMoodChange,
   companyName, onCompanyNameChange,
   companyLogo, onCompanyLogoChange,
-  loading, onGenerate, aiStatus,
+  loading, onGenerate,
+  generated, onSave,
 }) {
   const inputBase = {
     padding: '0 10px', height: 34, background: C.bg3, border: `1px solid ${C.b3}`,
@@ -119,8 +120,25 @@ export default function InputStrip({
           </div>
         </div>
 
-        {/* Generate CTA */}
-        <div style={{ marginLeft: 'auto', display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
+        {/* CTA group */}
+        <div style={{ marginLeft: 'auto', display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+          {generated && (
+            <button
+              onClick={onSave}
+              style={{
+                padding: '0 14px', height: 34, background: 'transparent',
+                border: `1px solid ${C.b3}`, borderRadius: 4,
+                fontSize: 12, fontWeight: 500, fontFamily: C.sans,
+                color: C.t3, cursor: 'pointer', transition: 'all .15s',
+                display: 'flex', alignItems: 'center', gap: 6,
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
+            >
+              <BookmarkPlus size={12} />
+              Save
+            </button>
+          )}
           <button
             onClick={onGenerate}
             disabled={loading}
