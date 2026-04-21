@@ -2,12 +2,12 @@ import { RefreshCw, BookmarkPlus } from "lucide-react";
 import { C } from "../utils/theme";
 import { isValidHex } from "../utils/colorUtils";
 
-function ColorPicker({ label, required, color, input, onColorChange, onInputChange }) {
+function ColorPicker({ label, color, input, onColorChange, onInputChange }) {
   const invalid = input.length > 1 && !isValidHex(input);
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
       <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>
-        {label}{required && <span style={{ color: C.accent }}> *</span>}
+        {label} <span style={{ color: C.accent }}>*</span>
       </div>
       <div style={{
         display: 'flex', alignItems: 'center', gap: 0,
@@ -15,14 +15,14 @@ function ColorPicker({ label, required, color, input, onColorChange, onInputChan
         borderRadius: 4, overflow: 'hidden', height: 34,
       }}>
         <div style={{ position: 'relative', width: 34, height: 34, background: color, flexShrink: 0, borderRight: `1px solid ${C.b3}` }}>
-          <input type="color" value={color} onChange={e => onColorChange(e.target.value)} />
+          <input type="color" value={color} onChange={e => onColorChange(e.target.value)}
+            style={{ position: 'absolute', inset: 0, opacity: 0, cursor: 'pointer', width: '100%', height: '100%' }} />
         </div>
         <input
           value={input}
           onChange={e => {
             const raw = e.target.value;
-            const norm = raw.startsWith('#') ? raw : raw ? `#${raw}` : raw;
-            onInputChange(norm);
+            onInputChange(raw.startsWith('#') ? raw : raw ? `#${raw}` : raw);
           }}
           onBlur={() => { if (!isValidHex(input)) onInputChange(color); }}
           style={{
@@ -36,32 +36,8 @@ function ColorPicker({ label, required, color, input, onColorChange, onInputChan
   );
 }
 
-function ModeToggle({ value, onChange }) {
-  return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-      <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>Mode</div>
-      <div style={{ display: 'inline-flex', background: C.bg2, border: `1px solid ${C.b2}`, borderRadius: 4, padding: 2, height: 34, alignItems: 'center' }}>
-        {['Light', 'Dark'].map(m => (
-          <button
-            key={m}
-            onClick={() => onChange(m)}
-            style={{
-              padding: '0 16px', height: 26, border: 'none', borderRadius: 3,
-              background: value === m ? C.accent : 'transparent',
-              color: value === m ? '#FFFFFF' : C.t3,
-              fontSize: 12, fontWeight: 500, transition: 'all .12s', lineHeight: 1,
-              fontFamily: C.sans,
-            }}
-          >{m}</button>
-        ))}
-      </div>
-    </div>
-  );
-}
-
 export default function InputStrip({
   colors, onColorChange,
-  pageStyle, onPageStyleChange,
   mood, onMoodChange,
   companyName, onCompanyNameChange,
   companyLogo, onCompanyLogoChange,
@@ -75,11 +51,11 @@ export default function InputStrip({
 
   return (
     <div style={{ borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0 }}>
-      <div style={{ padding: '14px 20px', display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
+      <div style={{ padding: '16px 24px', display: 'flex', gap: 16, alignItems: 'flex-end', flexWrap: 'wrap' }}>
 
-        {/* Color pickers */}
+        {/* 3 color pickers */}
         <div style={{ display: 'flex', gap: 10 }}>
-          <ColorPicker label="Primary" required color={colors.primary.hex} input={colors.primary.input}
+          <ColorPicker label="Primary" color={colors.primary.hex} input={colors.primary.input}
             onColorChange={v => onColorChange('primary', v, true)} onInputChange={v => onColorChange('primary', v, false)} />
           <ColorPicker label="Secondary" color={colors.secondary.hex} input={colors.secondary.input}
             onColorChange={v => onColorChange('secondary', v, true)} onInputChange={v => onColorChange('secondary', v, false)} />
@@ -89,34 +65,28 @@ export default function InputStrip({
 
         <div style={{ width: 1, height: 46, background: C.b3, flexShrink: 0 }} />
 
-        <ModeToggle value={pageStyle === 'dark' ? 'Dark' : 'Light'} onChange={v => onPageStyleChange(v.toLowerCase())} />
-
         {/* Mood input */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
           <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>
             Brand Mood / Industry
           </div>
-          <input
-            value={mood}
-            onChange={e => onMoodChange(e.target.value)}
-            placeholder="e.g. SaaS / Finance"
-            style={{ ...inputBase, width: 180 }}
-          />
+          <input value={mood} onChange={e => onMoodChange(e.target.value)}
+            placeholder="e.g. SaaS / Finance" style={{ ...inputBase, width: 180 }} />
         </div>
 
         <div style={{ width: 1, height: 46, background: C.b3, flexShrink: 0 }} />
 
-        {/* Company name + logo */}
+        {/* Company + logo */}
         <div style={{ display: 'flex', gap: 8 }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>Company</div>
-            <input value={companyName} onChange={e => onCompanyNameChange(e.target.value)} placeholder="Acme Inc."
-              style={{ ...inputBase, width: 120 }} />
+            <input value={companyName} onChange={e => onCompanyNameChange(e.target.value)}
+              placeholder="Acme Inc." style={{ ...inputBase, width: 120 }} />
           </div>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
             <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>Logo URL</div>
-            <input value={companyLogo} onChange={e => onCompanyLogoChange(e.target.value)} placeholder="https://…"
-              style={{ ...inputBase, width: 120, fontFamily: C.mono, fontSize: 10 }} />
+            <input value={companyLogo} onChange={e => onCompanyLogoChange(e.target.value)}
+              placeholder="https://…" style={{ ...inputBase, width: 120, fontFamily: C.mono, fontSize: 10 }} />
           </div>
         </div>
 
@@ -135,8 +105,7 @@ export default function InputStrip({
               onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
               onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
             >
-              <BookmarkPlus size={12} />
-              Save
+              <BookmarkPlus size={12} /> Save
             </button>
           )}
           <button

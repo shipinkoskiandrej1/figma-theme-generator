@@ -1,86 +1,77 @@
 import { C } from "../utils/theme";
-import { contrastRatio, wcagLevel } from "../utils/colorUtils";
+import { contrastRatio } from "../utils/colorUtils";
 import { WCAG_PAIRS } from "../utils/constants";
 
-function darken(hex, amt) {
-  const r = Math.max(0, parseInt(hex.slice(1,3),16) - amt);
-  const g = Math.max(0, parseInt(hex.slice(3,5),16) - amt);
-  const b = Math.max(0, parseInt(hex.slice(5,7),16) - amt);
-  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
-}
-
-function Badge({ pass, label }) {
-  return (
-    <span style={{
-      padding: '2px 6px', borderRadius: 3, fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em',
-      background: pass ? '#10B98116' : '#EF444416',
-      color: pass ? '#10B981' : '#EF4444',
-      border: `1px solid ${pass ? '#10B98130' : '#EF444430'}`,
-      fontFamily: C.sans,
-    }}>
-      {label} {pass ? '✓' : '✗'}
-    </span>
-  );
-}
-
-export default function WcagChecker({ theme }) {
+export default function WcagChecker({ theme, onViewFull }) {
   const pairs = WCAG_PAIRS.filter(p => theme[p.fg] && theme[p.bg]).map(p => {
     const ratio = contrastRatio(theme[p.fg], theme[p.bg]);
-    const ratioRounded = Math.round(ratio * 10) / 10;
-    const aa = ratio >= 4.5;
-    const aaa = ratio >= 7;
-    const alt = !aa ? darken(theme[p.fg], 40) : null;
-    return { ...p, fgHex: theme[p.fg], bgHex: theme[p.bg], ratio: ratioRounded, aa, aaa, alt };
+    return { aa: ratio >= 4.5, aaa: ratio >= 7 };
   });
 
+  const total  = pairs.length;
+  const passAA  = pairs.filter(p => p.aa).length;
+  const passAAA = pairs.filter(p => p.aaa).length;
+
+  const scoreColor = (pass, tot) => pass === tot ? '#059669' : pass >= tot * 0.7 ? '#D97706' : '#DC2626';
+
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
-      {pairs.map(({ label, fgHex, bgHex, ratio, aa, aaa, alt }) => (
-        <div key={label} style={{
-          border: `1px solid ${C.b2}`, borderRadius: 5, background: C.bg1,
-          overflow: 'hidden', display: 'flex', flexDirection: 'column',
+    <div style={{
+      background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6,
+      overflow: 'hidden',
+    }}>
+      {/* Header */}
+      <div style={{
+        padding: '14px 18px', borderBottom: `1px solid ${C.b2}`,
+        display: 'flex', alignItems: 'center', gap: 10,
+      }}>
+        <div style={{ width: 3, height: 14, background: C.accent, borderRadius: 2, flexShrink: 0 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.t3, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+          WCAG Summary
+        </span>
+      </div>
+
+      {/* Score cards */}
+      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+        {/* AA */}
+        <div style={{
+          padding: '16px 20px', borderRadius: 6,
+          background: '#F0FDF4', border: '1px solid #BBF7D0',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
-          {/* Live text preview */}
-          <div style={{ padding: '11px 12px', background: bgHex, borderBottom: `1px solid ${C.b2}`, minHeight: 48, display: 'flex', alignItems: 'center', gap: 8 }}>
-            <span style={{ fontSize: 15, fontWeight: 600, color: fgHex }}>Aa</span>
-            <span style={{ fontSize: 11, color: fgHex, opacity: .75 }}>Sample text</span>
-          </div>
-
-          {/* Color pair labels */}
-          <div style={{ padding: '10px 14px', borderBottom: `1px solid ${C.b2}`, display: 'flex', gap: 12 }}>
-            {[['Text', fgHex], ['Background', bgHex]].map(([lbl, hex]) => (
-              <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-                <div style={{ width: 10, height: 10, borderRadius: 2, background: hex, border: '1px solid rgba(0,0,0,.08)', flexShrink: 0 }} />
-                <div>
-                  <div style={{ fontSize: 8.5, color: C.t4, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: C.sans }}>{lbl}</div>
-                  <div style={{ fontFamily: C.mono, fontSize: 9.5, color: C.t2 }}>{hex.toUpperCase()}</div>
-                </div>
-              </div>
-            ))}
-          </div>
-
-          {/* Ratio + badges */}
-          <div style={{ padding: '10px 14px', display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div style={{ flex: 1 }}>
-              <div style={{ fontSize: 9, color: C.t4, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', marginBottom: 4, fontFamily: C.sans }}>{label}</div>
-              <div style={{ fontFamily: C.mono, fontSize: 18, fontWeight: 700, color: C.t1, lineHeight: 1 }}>{ratio}:1</div>
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 4, alignItems: 'flex-end' }}>
-              <Badge pass={aa} label="AA" />
-              <Badge pass={aaa} label="AAA" />
-            </div>
-          </div>
-
-          {/* Fix suggestion */}
-          {alt && (
-            <div style={{ padding: '8px 14px', background: '#FEF9EC', borderTop: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span style={{ fontSize: 10, color: '#92400E', flex: 1, fontFamily: C.sans }}>💡 Try</span>
-              <div style={{ width: 14, height: 14, borderRadius: 2, background: alt, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0 }} />
-              <span style={{ fontFamily: C.mono, fontSize: 9.5, color: '#92400E' }}>{alt}</span>
-            </div>
-          )}
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#15803D', fontFamily: C.sans }}>AA Compliance</span>
+          <span style={{ fontSize: 24, fontWeight: 700, color: scoreColor(passAA, total), fontFamily: C.mono }}>
+            {passAA}/{total}
+          </span>
         </div>
-      ))}
+
+        {/* AAA */}
+        <div style={{
+          padding: '16px 20px', borderRadius: 6,
+          background: '#F5F3FF', border: '1px solid #DDD6FE',
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+        }}>
+          <span style={{ fontSize: 14, fontWeight: 600, color: '#6D28D9', fontFamily: C.sans }}>AAA Compliance</span>
+          <span style={{ fontSize: 24, fontWeight: 700, color: '#7C3AED', fontFamily: C.mono }}>
+            {passAAA}/{total}
+          </span>
+        </div>
+
+        {/* View full button */}
+        <button
+          onClick={onViewFull}
+          style={{
+            marginTop: 4, width: '100%', padding: '12px 0',
+            background: 'transparent', border: `1px solid ${C.b3}`,
+            borderRadius: 6, fontSize: 12, fontWeight: 500, fontFamily: C.sans,
+            color: C.t3, cursor: 'pointer', transition: 'all .15s',
+            letterSpacing: '.01em',
+          }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+          onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
+        >
+          View Full Analysis →
+        </button>
+      </div>
     </div>
   );
 }

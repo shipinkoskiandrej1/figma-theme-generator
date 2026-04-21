@@ -1,6 +1,6 @@
 import { useState, useRef } from "react";
 import { C } from "../utils/theme";
-import { GROUPS } from "../utils/constants";
+import { PRIMITIVE_GROUPS, SEMANTIC_GROUPS } from "../utils/constants";
 
 function copyToClipboard(text, cb) {
   if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(cb).catch(() => fallback(text, cb));
@@ -13,13 +13,106 @@ function fallback(text, cb) {
   document.body.removeChild(ta);
 }
 
-export default function VariableTable({ theme, onEdit }) {
-  const [editing, setEditing] = useState(null);
-  const [editVal, setEditVal] = useState('');
-  const [copied, setCopied] = useState(null);
-  const colorRefs = useRef({});
+function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdit, onEditValChange, copied, onCopy, colorRefs }) {
+  return (
+    <div>
+      <div style={{
+        padding: '10px 18px', fontSize: 9, fontWeight: 700, color: C.t5,
+        letterSpacing: '.12em', textTransform: 'uppercase', background: C.bg3,
+        borderBottom: `1px solid ${C.b2}`, fontFamily: C.sans,
+      }}>
+        {group.name}
+      </div>
+      {group.vars.filter(v => theme[v.key]).map((v, i) => {
+        const val = theme[v.key];
+        const isEditing = editing === v.key;
+        return (
+          <div
+            key={v.key}
+            onMouseEnter={e => e.currentTarget.style.background = C.bg3}
+            onMouseLeave={e => e.currentTarget.style.background = i % 2 ? C.bg2 : C.bg1}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px',
+              background: i % 2 ? C.bg2 : C.bg1,
+              borderBottom: `1px solid ${C.b1}`, transition: 'background .1s',
+            }}
+          >
+            {/* Swatch */}
+            {v.type === 'color' && (
+              <div
+                style={{ width: 20, height: 20, borderRadius: 4, background: val, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0, cursor: 'pointer', position: 'relative' }}
+                onClick={() => colorRefs.current[v.key]?.click()}
+              >
+                <input type="color" ref={el => colorRefs.current[v.key] = el} value={val}
+                  onChange={e => onStartEdit(v.key, e.target.value, true)}
+                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} />
+              </div>
+            )}
 
-  const startEdit = (key, val) => { setEditing(key); setEditVal(val); };
+            {/* Token name */}
+            <span style={{ flex: 1, fontFamily: C.mono, fontSize: 11, color: C.t3, letterSpacing: '.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              {v.key}
+            </span>
+
+            {/* Value / edit */}
+            {isEditing ? (
+              <input
+                value={editVal}
+                onChange={e => onEditValChange(e.target.value)}
+                onBlur={() => onCommitEdit(v.key)}
+                onKeyDown={e => e.key === 'Enter' && onCommitEdit(v.key)}
+                autoFocus
+                style={{
+                  width: 86, background: C.bg4, border: `1px solid ${C.accent}`, borderRadius: 3,
+                  padding: '3px 8px', fontFamily: C.mono, fontSize: 11, color: C.t1, letterSpacing: '.04em',
+                }}
+              />
+            ) : (
+              <span style={{ fontFamily: v.type === 'color' ? C.mono : C.sans, fontSize: 11, color: C.t1, letterSpacing: '.04em', textTransform: v.type === 'color' ? 'uppercase' : 'none', fontStyle: v.type === 'font' ? 'italic' : 'normal' }}>
+                {val}
+              </span>
+            )}
+
+            {/* Edit button */}
+            {v.type === 'color' && (
+              <button
+                onClick={() => isEditing ? onCommitEdit(v.key) : onStartEdit(v.key, val)}
+                style={{ background: 'none', border: 'none', color: isEditing ? C.accent : C.t5, fontSize: 13, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0, cursor: 'pointer' }}
+              >
+                {isEditing ? '✓' : '✎'}
+              </button>
+            )}
+
+            {/* Copy */}
+            <button
+              onClick={() => onCopy(v.key, val)}
+              style={{ background: 'none', border: 'none', color: copied === v.key ? '#10B981' : C.t5, fontSize: 11, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0, cursor: 'pointer' }}
+              title="Copy value"
+            >
+              {copied === v.key ? '✓' : '⎘'}
+            </button>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
+export default function VariableTable({ theme, activeMode, onEdit }) {
+  const [editing, setEditing]   = useState(null);
+  const [editVal, setEditVal]   = useState('');
+  const [copied, setCopied]     = useState(null);
+  const colorRefs               = useRef({});
+
+  const startEdit = (key, val, fromPicker = false) => {
+    if (fromPicker) {
+      onEdit(key, val);
+    } else {
+      setEditing(key);
+      setEditVal(val);
+    }
+  };
+
   const commitEdit = (key) => {
     if (/^#[0-9A-Fa-f]{6}$/.test(editVal)) onEdit(key, editVal);
     setEditing(null);
@@ -29,105 +122,44 @@ export default function VariableTable({ theme, onEdit }) {
     copyToClipboard(val, () => { setCopied(key); setTimeout(() => setCopied(null), 1500); });
   };
 
-  const colorVars = GROUPS.flatMap(g => g.vars).filter(v => v.type === 'color' && theme[v.key]);
-  const rowCount = colorVars.length;
+  const sharedProps = { editing, editVal, onStartEdit: startEdit, onCommitEdit: commitEdit, onEditValChange: setEditVal, copied, onCopy: copyVal, colorRefs };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden', border: `1px solid ${C.b2}` }}>
-      {GROUPS.map((group) => {
-        const rows = group.vars.filter(v => theme[v.key]);
-        if (!rows.length) return null;
-        return (
-          <div key={group.name}>
-            {/* Group header */}
-            <div style={{
-              padding: '9px 14px', fontSize: 9, fontWeight: 600, color: C.t5,
-              letterSpacing: '.12em', textTransform: 'uppercase', background: C.bg3,
-              borderBottom: `1px solid ${C.b2}`, fontFamily: C.sans,
-            }}>
-              {group.name}
-            </div>
+    <div style={{ borderRadius: 4, overflow: 'hidden', border: `1px solid ${C.b2}` }}>
 
-            {rows.map((v, i) => {
-              const val = theme[v.key];
-              const isEditing = editing === v.key;
-              return (
-                <div
-                  key={v.key}
-                  onMouseEnter={e => e.currentTarget.style.background = C.bg3}
-                  onMouseLeave={e => e.currentTarget.style.background = i % 2 ? C.bg2 : C.bg1}
-                  style={{
-                    display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px',
-                    background: i % 2 ? C.bg2 : C.bg1,
-                    borderBottom: `1px solid ${C.b1}`, transition: 'background .1s',
-                  }}
-                >
-                  {/* Swatch */}
-                  {v.type === 'color' && (
-                    <div
-                      style={{ width: 16, height: 16, borderRadius: 3, background: val, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0, cursor: 'pointer' }}
-                      onClick={() => colorRefs.current[v.key]?.click()}
-                    >
-                      <input type="color" ref={el => colorRefs.current[v.key] = el} value={val}
-                        onChange={e => onEdit(v.key, e.target.value)}
-                        style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} />
-                    </div>
-                  )}
+      {/* ── PRIMITIVE section header ── */}
+      <div style={{
+        padding: '11px 18px', background: C.bg0, borderBottom: `1px solid ${C.b2}`,
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <div style={{ width: 3, height: 12, background: '#7C3AED', borderRadius: 2 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+          Primitive Tokens
+        </span>
+      </div>
 
-                  {/* Token name */}
-                  <span style={{ flex: 1, fontFamily: C.mono, fontSize: 10.5, color: C.t3, letterSpacing: '.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {v.key}
-                  </span>
+      {PRIMITIVE_GROUPS.map(group => (
+        <GroupSection key={group.name} group={group} theme={theme} {...sharedProps} />
+      ))}
 
-                  {/* Value / edit input */}
-                  {isEditing ? (
-                    <input
-                      value={editVal}
-                      onChange={e => setEditVal(e.target.value)}
-                      onBlur={() => commitEdit(v.key)}
-                      onKeyDown={e => e.key === 'Enter' && commitEdit(v.key)}
-                      autoFocus
-                      style={{
-                        width: 80, background: C.bg4, border: `1px solid ${C.accent}`, borderRadius: 3,
-                        padding: '2px 6px', fontFamily: C.mono, fontSize: 10.5, color: C.t1, letterSpacing: '.04em',
-                      }}
-                    />
-                  ) : (
-                    <span style={{ fontFamily: C.mono, fontSize: 10.5, color: C.t1, letterSpacing: '.04em', textTransform: 'uppercase' }}>
-                      {v.type === 'color' ? val : <em style={{ fontFamily: C.sans, fontStyle: 'italic', fontSize: 11, color: C.t2 }}>{val}</em>}
-                    </span>
-                  )}
+      {/* ── SEMANTIC section header ── */}
+      <div style={{
+        padding: '11px 18px', background: C.bg0, borderBottom: `1px solid ${C.b2}`,
+        borderTop: `2px solid ${C.b2}`,
+        display: 'flex', alignItems: 'center', gap: 8,
+      }}>
+        <div style={{ width: 3, height: 12, background: C.accent, borderRadius: 2 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+          Semantic Tokens
+        </span>
+        <span style={{ fontSize: 10, color: C.t4, fontFamily: C.sans, marginLeft: 4 }}>
+          — {activeMode === 'light' ? 'Light' : 'Dark'} Mode
+        </span>
+      </div>
 
-                  {/* Edit button */}
-                  {v.type === 'color' && (
-                    <button
-                      onClick={() => isEditing ? commitEdit(v.key) : startEdit(v.key, val)}
-                      style={{
-                        background: 'none', border: 'none', color: isEditing ? C.accent : C.t5,
-                        fontSize: 12, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0,
-                      }}
-                    >
-                      {isEditing ? '✓' : '✎'}
-                    </button>
-                  )}
-
-                  {/* Copy button */}
-                  <button
-                    onClick={() => copyVal(v.key, val)}
-                    style={{
-                      background: 'none', border: 'none', color: copied === v.key ? '#10B981' : C.t5,
-                      fontSize: 10, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0,
-                    }}
-                    title="Copy value"
-                  >
-                    {copied === v.key ? '✓' : '⎘'}
-                  </button>
-                </div>
-              );
-            })}
-          </div>
-        );
-      })}
+      {SEMANTIC_GROUPS.map(group => (
+        <GroupSection key={group.name} group={group} theme={theme} {...sharedProps} />
+      ))}
     </div>
   );
 }

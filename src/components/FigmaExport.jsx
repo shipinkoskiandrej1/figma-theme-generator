@@ -26,42 +26,46 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
   };
 
   const inputStyle = {
-    padding: '7px 10px', background: C.bg3, border: `1px solid ${C.b3}`,
+    padding: '8px 12px', background: C.bg3, border: `1px solid ${C.b3}`,
     borderRadius: 4, color: C.t1, fontSize: 12, fontFamily: C.sans, width: '100%',
   };
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 20 }}>
+
       {/* Collection name */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
-        <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>Collection Name</div>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>Semantic Collection Name</div>
         <input value={collectionName} onChange={e => onCollectionNameChange(e.target.value)} style={inputStyle} />
+        <div style={{ fontSize: 10, color: C.t5, fontFamily: C.sans, lineHeight: 1.5 }}>
+          This is the name for the semantic token collection in Figma. Primitives are always saved to a "Primitives" collection.
+        </div>
       </div>
 
-      {/* Export options */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      {/* Export cards */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         {[
-          ['Console Script', script, 'Paste in Figma → Plugins → Development → Console'],
-          ['Token Studio JSON', json, 'Load via Token Studio plugin → New token set → Load from JSON'],
+          ['Figma Console Script', script, 'Plugins → Development → Open Console — creates "Primitives" + semantic collections with Light / Dark modes'],
+          ['Token Studio JSON', json, 'Token Studio → New token set → Load from JSON — includes global, light, and dark sets'],
         ].map(([title, code, hint]) => (
-          <div key={title} style={{ padding: 14, background: C.bg2, border: `1px solid ${C.b2}`, borderRadius: 4, display: 'flex', flexDirection: 'column', gap: 10 }}>
+          <div key={title} style={{ padding: 18, background: C.bg2, border: `1px solid ${C.b2}`, borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
-              <div style={{ fontSize: 11, fontWeight: 600, color: C.t2, marginBottom: 3, fontFamily: C.sans }}>{title}</div>
-              <div style={{ fontSize: 10, color: C.t4, lineHeight: 1.5, fontFamily: C.sans }}>{hint}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 4, fontFamily: C.sans }}>{title}</div>
+              <div style={{ fontSize: 10, color: C.t4, lineHeight: 1.6, fontFamily: C.sans }}>{hint}</div>
             </div>
             <pre style={{
               fontFamily: C.mono, fontSize: 9.5, color: C.t3, background: C.bg3,
-              padding: 10, borderRadius: 3, lineHeight: 1.75, overflowX: 'auto',
-              whiteSpace: 'pre', maxHeight: 140, overflowY: 'auto', margin: 0,
+              padding: 12, borderRadius: 4, lineHeight: 1.75, overflowX: 'auto',
+              whiteSpace: 'pre', maxHeight: 150, overflowY: 'auto', margin: 0,
             }}>
-              {code.slice(0, 500)}{code.length > 500 ? '\n  …' : ''}
+              {code.slice(0, 600)}{code.length > 600 ? '\n  …' : ''}
             </pre>
             <button
               onClick={() => copy(title, code)}
               style={{
-                padding: '7px', background: 'transparent', fontWeight: 500, fontFamily: C.sans,
-                border: `1px solid ${copied === title ? '#10B98160' : C.b3}`, borderRadius: 3,
-                color: copied === title ? '#10B981' : C.t2, fontSize: 11, transition: 'all .2s', cursor: 'pointer',
+                padding: '8px', background: 'transparent', fontWeight: 500, fontFamily: C.sans,
+                border: `1px solid ${copied === title ? '#10B98160' : C.b3}`, borderRadius: 4,
+                color: copied === title ? '#10B981' : C.t2, fontSize: 12, transition: 'all .2s', cursor: 'pointer',
               }}
             >
               {copied === title ? '✓ Copied!' : 'Copy'}
@@ -80,17 +84,35 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
       </button>
 
       {showInstructions && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
           {[
-            { label: 'Console script', steps: ['In Figma, go to Plugins → Development → Open console', 'Paste the script and press Enter', 'Variables appear instantly in your Local Variables panel'] },
-            { label: 'Token Studio JSON', steps: ['Install Token Studio from the Figma Community', 'Open Token Studio → New token set', 'Click "…" menu → Load from JSON and paste', 'Apply tokens to sync as Figma Variables'] },
+            {
+              label: 'Figma Console Script',
+              steps: [
+                'In Figma, go to Plugins → Development → Open Console',
+                'Paste the full script and press Enter',
+                'Creates a "Primitives" collection with your brand + neutral palette',
+                'Creates a "' + collectionName + '" collection with Light and Dark modes',
+                'Semantic tokens get values for both modes simultaneously',
+              ]
+            },
+            {
+              label: 'Token Studio JSON',
+              steps: [
+                'Install Token Studio from the Figma Community',
+                'Open Token Studio → New token set',
+                'Click "…" menu → Load from JSON and paste',
+                'You\'ll get "global" (primitives), "light", and "dark" token sets',
+                'Enable sets and apply to sync as Figma Variables',
+              ]
+            },
           ].map((block, i) => (
-            <div key={i} style={{ background: C.bg3, borderRadius: 4, padding: '10px 12px' }}>
-              <div style={{ fontSize: 11, fontWeight: 600, color: C.t2, marginBottom: 6, fontFamily: C.sans }}>{block.label}</div>
+            <div key={i} style={{ background: C.bg3, borderRadius: 5, padding: '12px 16px' }}>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 8, fontFamily: C.sans }}>{block.label}</div>
               {block.steps.map((s, j) => (
-                <div key={j} style={{ display: 'flex', gap: 8, marginBottom: 4 }}>
+                <div key={j} style={{ display: 'flex', gap: 8, marginBottom: 5 }}>
                   <span style={{ fontSize: 10, color: C.t4, minWidth: 14, paddingTop: 1, fontFamily: C.sans }}>{j+1}.</span>
-                  <span style={{ fontSize: 11, color: C.t3, lineHeight: 1.5, fontFamily: C.sans }}>{s}</span>
+                  <span style={{ fontSize: 11, color: C.t3, lineHeight: 1.6, fontFamily: C.sans }}>{s}</span>
                 </div>
               ))}
             </div>

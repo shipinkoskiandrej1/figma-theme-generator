@@ -12,7 +12,7 @@ function darken(hex, amt) {
 function Badge({ pass, label }) {
   return (
     <span style={{
-      padding: '2px 6px', borderRadius: 3, fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em',
+      padding: '3px 7px', borderRadius: 3, fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em',
       background: pass ? '#10B98116' : '#EF444416',
       color: pass ? '#10B981' : '#EF4444',
       border: `1px solid ${pass ? '#10B98130' : '#EF444430'}`,
@@ -24,10 +24,30 @@ function Badge({ pass, label }) {
 }
 
 function Skeleton({ h = 14, style }) {
-  return <div style={{ height: h, borderRadius: 3, background: C.bg3, animation: 'pulse 1.4s ease-in-out infinite', ...style }} />;
+  return <div style={{ height: h, borderRadius: 4, background: C.bg3, animation: 'pulse 1.4s ease-in-out infinite', ...style }} />;
 }
 
-export default function AccessibilityTab({ theme, loading }) {
+function ModeToggle({ activeMode, onModeChange }) {
+  return (
+    <div style={{ display: 'inline-flex', background: C.bg2, border: `1px solid ${C.b2}`, borderRadius: 5, padding: 3 }}>
+      {['light', 'dark'].map(m => (
+        <button
+          key={m}
+          onClick={() => onModeChange(m)}
+          style={{
+            padding: '5px 18px', border: 'none', borderRadius: 3,
+            background: activeMode === m ? C.accent : 'transparent',
+            color: activeMode === m ? '#fff' : C.t3,
+            fontSize: 12, fontWeight: 500, fontFamily: C.sans,
+            transition: 'all .12s', cursor: 'pointer', textTransform: 'capitalize',
+          }}
+        >{m}</button>
+      ))}
+    </div>
+  );
+}
+
+export default function AccessibilityTab({ theme, loading, activeMode, onModeChange }) {
   if (!theme) return null;
 
   const pairs = WCAG_PAIRS.filter(p => theme[p.fg] && theme[p.bg]).map(p => {
@@ -43,40 +63,51 @@ export default function AccessibilityTab({ theme, loading }) {
   const total   = pairs.length;
 
   return (
-    <div style={{ padding: '24px 24px 80px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+    <div style={{ padding: '28px 28px 80px', display: 'flex', flexDirection: 'column', gap: 28 }}>
+
+      {/* Header + mode toggle */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, fontFamily: C.sans }}>Accessibility Analysis</div>
+          <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans, marginTop: 3 }}>
+            WCAG contrast ratios for {activeMode === 'light' ? 'Light' : 'Dark'} Mode
+          </div>
+        </div>
+        <ModeToggle activeMode={activeMode} onModeChange={onModeChange} />
+      </div>
 
       {/* Summary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
         {[
           ['Total Pairs',  total,          C.t1,      C.bg1,     C.b2],
-          ['AA Pass',      passAA,         '#059669', '#D1FAE5', '#A7F3D0'],
-          ['AAA Pass',     passAAA,        '#7C3AED', '#EDE9FE', '#C4B5FD'],
-          ['Needs Fix',    total - passAA, '#DC2626', '#FEE2E2', '#FCA5A5'],
+          ['AA Pass',      passAA,         '#059669', '#F0FDF4', '#BBF7D0'],
+          ['AAA Pass',     passAAA,        '#7C3AED', '#F5F3FF', '#DDD6FE'],
+          ['Needs Fix',    total - passAA, '#DC2626', '#FEF2F2', '#FCA5A5'],
         ].map(([label, val, textColor, bgColor, borderColor]) => (
           <div key={label} style={{
-            padding: '16px 20px', background: bgColor,
+            padding: '20px 22px', background: bgColor,
             border: `1px solid ${borderColor}`, borderRadius: 6,
-            display: 'flex', flexDirection: 'column', gap: 4,
+            display: 'flex', flexDirection: 'column', gap: 6,
           }}>
-            <div style={{ fontSize: 26, fontWeight: 700, color: textColor, lineHeight: 1, fontFamily: C.mono }}>{val}</div>
+            <div style={{ fontSize: 28, fontWeight: 700, color: textColor, lineHeight: 1, fontFamily: C.mono }}>{val}</div>
             <div style={{ fontSize: 11, fontWeight: 600, color: textColor, opacity: .7, letterSpacing: '.05em', textTransform: 'uppercase', fontFamily: C.sans }}>{label}</div>
           </div>
         ))}
       </div>
 
       {/* Standard explainers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 14 }}>
         {[
-          ['AA — Minimum Standard', '4.5:1', 'Required for normal text. 3:1 for large text (18pt+ or 14pt bold). WCAG 2.1 Level AA compliance required by most accessibility laws (ADA, AODA, EN 301 549).', '#059669'],
-          ['AAA — Enhanced Standard', '7:1', 'Highest level of contrast. Required for users with low vision. Recommended for body text in enterprise and government applications.', '#7C3AED'],
+          ['AA — Minimum Standard', '4.5:1', 'Required for normal text. 3:1 for large text (18pt+ or 14pt bold). Required by most accessibility laws (ADA, AODA, EN 301 549).', '#059669'],
+          ['AAA — Enhanced Standard', '7:1', 'Highest contrast level. Required for users with low vision. Recommended for body text in enterprise and government applications.', '#7C3AED'],
         ].map(([title, ratio, desc, color]) => (
-          <div key={title} style={{ padding: '16px 18px', background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
-            <div style={{ width: 36, height: 36, borderRadius: 6, background: color + '18', border: `1px solid ${color}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+          <div key={title} style={{ padding: '18px 20px', background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6, display: 'flex', gap: 16, alignItems: 'flex-start' }}>
+            <div style={{ width: 40, height: 40, borderRadius: 6, background: color + '18', border: `1px solid ${color}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
               <span style={{ fontFamily: C.mono, fontSize: 10, fontWeight: 700, color }}>{ratio}</span>
             </div>
             <div>
-              <div style={{ fontSize: 12, fontWeight: 600, color: C.t1, marginBottom: 4, fontFamily: C.sans }}>{title}</div>
-              <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.65, fontFamily: C.sans }}>{desc}</div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.t1, marginBottom: 5, fontFamily: C.sans }}>{title}</div>
+              <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.7, fontFamily: C.sans }}>{desc}</div>
             </div>
           </div>
         ))}
@@ -84,33 +115,33 @@ export default function AccessibilityTab({ theme, loading }) {
 
       {/* Full pair grid */}
       <div>
-        <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 14, fontFamily: C.sans }}>
+        <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 16, fontFamily: C.sans }}>
           Color Pair Analysis
         </div>
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
-            {[1,2,3,4,5].map(i => <Skeleton key={i} h={180} />)}
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
+            {[1,2,3,4,5,6].map(i => <Skeleton key={i} h={200} />)}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 16 }}>
             {pairs.map(({ label, fgHex, bgHex, ratio, aa, aaa, alt }) => (
               <div key={label} style={{ border: `1px solid ${C.b2}`, borderRadius: 6, background: C.bg1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 {/* Preview */}
-                <div style={{ padding: '20px 20px 16px', background: bgHex, minHeight: 80, display: 'flex', flexDirection: 'column', gap: 6 }}>
-                  <span style={{ fontSize: 20, fontWeight: 700, color: fgHex, lineHeight: 1, fontFamily: C.sans }}>Aa</span>
+                <div style={{ padding: '22px 22px 18px', background: bgHex, minHeight: 88, display: 'flex', flexDirection: 'column', gap: 7 }}>
+                  <span style={{ fontSize: 22, fontWeight: 700, color: fgHex, lineHeight: 1, fontFamily: C.sans }}>Aa</span>
                   <span style={{ fontSize: 13, color: fgHex, opacity: .85, fontFamily: C.sans }}>The quick brown fox jumps</span>
                   <span style={{ fontSize: 11, color: fgHex, opacity: .65, fontFamily: C.sans }}>over the lazy dog 0123456</span>
                 </div>
                 {/* Pair + ratio */}
                 <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.b2}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, fontFamily: C.sans }}>{label}</div>
-                  <div style={{ fontFamily: C.mono, fontSize: 18, fontWeight: 700, color: aa ? '#059669' : '#DC2626' }}>{ratio}:1</div>
+                  <div style={{ fontFamily: C.mono, fontSize: 20, fontWeight: 700, color: aa ? '#059669' : '#DC2626' }}>{ratio}:1</div>
                 </div>
                 {/* Colors */}
                 <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.b2}`, display: 'flex', gap: 16 }}>
                   {[['Text', fgHex], ['Background', bgHex]].map(([lbl, hex]) => (
-                    <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                    <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
                       <div style={{ width: 12, height: 12, borderRadius: 2, background: hex, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0 }} />
                       <div>
                         <div style={{ fontSize: 9, color: C.t4, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: C.sans }}>{lbl}</div>
@@ -124,7 +155,6 @@ export default function AccessibilityTab({ theme, loading }) {
                   <Badge pass={aa}  label="AA" />
                   <Badge pass={aaa} label="AAA" />
                 </div>
-                {/* Fix */}
                 {alt && (
                   <div style={{ padding: '10px 18px', background: '#FFFBEB', borderTop: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: 8 }}>
                     <span style={{ fontSize: 10, color: '#92400E', flex: 1, fontWeight: 500, fontFamily: C.sans }}>💡 Suggested fix</span>
