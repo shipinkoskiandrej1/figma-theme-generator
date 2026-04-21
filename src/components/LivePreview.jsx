@@ -11,14 +11,14 @@ export default function LivePreview({ theme, companyName, companyLogo, pageStyle
   if (!theme) return null;
 
   const dark = pageStyle === 'dark';
-  const bg    = theme["color/bg/page"]    || (dark ? '#0C1221' : '#FAFAFA');
-  const surf  = theme["color/bg/surface"] || (dark ? '#101829' : '#F4F4F5');
-  const brd   = theme["color/border/default"] || (dark ? '#1C2C46' : '#E4E4E7');
-  const h     = theme["color/text/primary"]   || (dark ? '#FAFAFA' : '#09090B');
-  const body  = theme["color/text/secondary"] || '#71717A';
-  const brand = theme["color/brand/default"] || '#5292CE';
-  const onBrand = theme["color/text/on-brand"] || '#FFFFFF';
-  const subtle = theme["color/brand/subtle"] || alpha(brand, .12);
+  const bg      = theme["color/bg/base"]          || (dark ? '#0C1221' : '#FAFAFA');
+  const surf    = theme["color/bg/surface"]        || (dark ? '#101829' : '#F4F4F5');
+  const brd     = theme["color/border/default"]    || (dark ? '#1C2C46' : '#E4E4E7');
+  const h       = theme["color/text/primary"]      || (dark ? '#FAFAFA' : '#09090B');
+  const body    = theme["color/text/secondary"]    || '#71717A';
+  const brand   = theme["color/brand/primary"]     || '#5292CE';
+  const onBrand = theme["color/text/on-brand"]     || '#FFFFFF';
+  const subtle  = theme["color/brand/primary-subtle"] || alpha(brand, .12);
 
   const display = theme["font/family/display"] ? `${theme["font/family/display"]}, serif` : C.sans;
   const bodyFont = theme["font/family/body"] ? `${theme["font/family/body"]}, sans-serif` : C.sans;
@@ -68,8 +68,8 @@ export default function LivePreview({ theme, companyName, companyLogo, pageStyle
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 10 }}>
           {[
             [brand,   'Instant Export', 'Generate Figma Variables with one click. No plugins required.'],
-            [theme["color/brand/hover"] || brand, 'WCAG Ready', 'Every color pair tested for AA and AAA compliance.'],
-            [theme["color/brand/subtle"] || subtle, 'AI-Powered', 'Smart palette generation from your primary brand color.'],
+            [theme["color/brand/primary-hover"] || brand, 'WCAG Ready', 'Every color pair tested for AA and AAA compliance.'],
+            [theme["color/brand/secondary"] || subtle, 'AI-Powered', 'Smart palette generation from your primary brand color.'],
           ].map(([accent, title, desc]) => (
             <div key={title} style={{ padding: 14, background: surf, border: `1px solid ${brd}`, borderRadius: 4 }}>
               <div style={{ width: 28, height: 28, borderRadius: 6, background: alpha(accent, .14), border: `1px solid ${alpha(accent, .25)}`, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 11 }}>
@@ -82,7 +82,7 @@ export default function LivePreview({ theme, companyName, companyLogo, pageStyle
         </div>
 
         {/* Inverse band */}
-        <div style={{ background: theme["color/bg/inverse"] || '#0C1221', borderRadius: 6, padding: '14px 20px', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ background: theme["color/bg/overlay"] || '#0C1221', borderRadius: 6, padding: '14px 20px', marginTop: 16, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           <span style={{ fontSize: 13, fontWeight: 600, color: dark ? '#0C1221' : '#FAFAFA', fontFamily: display }}>Ready to get started?</span>
           <div style={{ background: brand, color: onBrand, padding: '7px 16px', borderRadius: 4, fontSize: 12, fontWeight: 600, fontFamily: bodyFont }}>Sign up</div>
         </div>

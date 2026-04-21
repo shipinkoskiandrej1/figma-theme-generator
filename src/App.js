@@ -88,26 +88,47 @@ export default function App() {
     }
 - Page style: ${pageStyle}${mood ? `\n- Brand mood / industry: ${mood}` : ""}
 
-Apply the 60/30/10 composition rule strictly:
-- 60%: color/bg/page and color/bg/surface must anchor to or harmonize with the primary color
-- 30%: color/text/primary, color/text/secondary, color/border/default, color/brand/subtle derived from${hasSecondary ? " the secondary color" : " a complementary secondary palette"}
-- 10%: color/brand/default, color/brand/hover use${hasTertiary ? " the accent color" : " a derived accent from the primary"}
+Apply the 60/30/10 composition rule:
+- 60%: bg/base, bg/surface, bg/elevated, bg/overlay — layered background scale anchored to the primary color
+- 30%: text colors, borders — derived from${hasSecondary ? " the secondary color" : " a complementary neutral palette"}
+- 10%: brand/primary and all interactive brand colors — from${hasTertiary ? " the accent color" : " a derived accent"}
 
-RULES:
-- color/brand/default may be adjusted slightly from the ${hasTertiary ? "accent" : "primary"} for readability
-- color/brand/hover must be noticeably darker than brand/default
-- color/brand/subtle: very ${pageStyle === "dark" ? "dark muted" : "light airy"} tint of the brand
-- color/bg/page: ${pageStyle === "dark" ? "dark rich (not pure black)" : "very light near-white"}
-- color/bg/surface: ${pageStyle === "dark" ? "slightly lighter than page" : "slightly darker/warmer than page"}
-- color/bg/inverse: ${pageStyle === "dark" ? "light near-white" : "dark rich tone"}
-- color/text/primary MUST achieve ≥ 7:1 contrast against color/bg/page (WCAG AAA)
-- color/text/secondary MUST achieve ≥ 4.5:1 contrast against color/bg/page (WCAG AA)
-- color/text/on-brand must be readable (≥ 4.5:1) on color/brand/default
-- color/border/default: subtle, low-contrast separator tone
-- Font families must be real Google Fonts. Avoid Inter, Roboto, Arial, Open Sans.
+TOKEN RULES:
+Brand scale:
+- color/brand/primary: the main CTA/button color. May be adjusted from the ${hasTertiary ? "accent" : "primary"} for readability
+- color/brand/primary-hover: noticeably darker than brand/primary (~15% darker)
+- color/brand/primary-subtle: very ${pageStyle === "dark" ? "dark, barely-visible" : "light, airy"} tint (~10% opacity of brand/primary)
+- color/brand/secondary: a harmonious secondary accent (derived from secondary input if given, otherwise complement of primary)
+- color/brand/secondary-hover: ~15% darker than brand/secondary
+- color/brand/tertiary: a deeper, supporting brand tone (e.g. dark navy or muted variant)
 
-Return ONLY valid JSON, no markdown, no comments:
-{"color/brand/default":"#hex","color/brand/hover":"#hex","color/brand/subtle":"#hex","color/bg/page":"#hex","color/bg/surface":"#hex","color/bg/inverse":"#hex","color/text/primary":"#hex","color/text/secondary":"#hex","color/text/on-brand":"#hex","color/border/default":"#hex","font/family/display":"Font Name","font/family/body":"Font Name"}`;
+Background scale (${pageStyle === "dark" ? "dark mode" : "light mode"}):
+- color/bg/base: ${pageStyle === "dark" ? "darkest, richest bg (not pure black, e.g. deep navy)" : "lightest near-white bg"}
+- color/bg/surface: ${pageStyle === "dark" ? "slightly lighter than base (e.g. +5-8% lightness)" : "slightly off-white, card bg"}
+- color/bg/elevated: ${pageStyle === "dark" ? "slightly lighter than surface (raised elements)" : "slightly warmer/darker than surface"}
+- color/bg/overlay: ${pageStyle === "dark" ? "slightly lighter than elevated (modals, popovers)" : "softest overlay bg"}
+
+Text scale:
+- color/text/primary: MUST achieve ≥ 7:1 contrast on bg/base (WCAG AAA)
+- color/text/secondary: MUST achieve ≥ 4.5:1 contrast on bg/base (WCAG AA)
+- color/text/muted: subtle, ≥ 3:1 on bg/base (disabled labels, metadata)
+- color/text/disabled: very low contrast, for truly disabled elements
+- color/text/on-brand: MUST achieve ≥ 4.5:1 on brand/primary (usually white or very dark)
+
+Border scale:
+- color/border/default: low-contrast separator, barely visible
+- color/border/subtle: even more subtle than default
+- color/border/focus: matches brand/primary (focus rings)
+
+Typography:
+- color/link/default: readable link color, ≥ 4.5:1 on bg/base
+- color/link/hover: slightly lighter/brighter than link/default
+- color/text/accent: accent text (e.g. highlighted labels, tags)
+- font/family/display: real Google Font for headings. Avoid Inter, Roboto, Arial, Open Sans
+- font/family/body: real Google Font for body text. Avoid Inter, Roboto, Arial, Open Sans
+
+Return ONLY valid JSON, no markdown, no comments. All color values must be valid 6-digit hex:
+{"color/brand/primary":"#hex","color/brand/primary-hover":"#hex","color/brand/primary-subtle":"#hex","color/brand/secondary":"#hex","color/brand/secondary-hover":"#hex","color/brand/tertiary":"#hex","color/bg/base":"#hex","color/bg/surface":"#hex","color/bg/elevated":"#hex","color/bg/overlay":"#hex","color/text/primary":"#hex","color/text/secondary":"#hex","color/text/muted":"#hex","color/text/disabled":"#hex","color/text/on-brand":"#hex","color/border/default":"#hex","color/border/subtle":"#hex","color/border/focus":"#hex","color/link/default":"#hex","color/link/hover":"#hex","color/text/accent":"#hex","font/family/display":"Font Name","font/family/body":"Font Name"}`;
 
     try {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -118,7 +139,7 @@ Return ONLY valid JSON, no markdown, no comments:
         },
         body: JSON.stringify({
           model: "gpt-4o",
-          max_tokens: 1000,
+          max_tokens: 1200,
           messages: [
             { role: "system", content: "You are a senior product designer and color systems expert. Return only valid JSON — no markdown, no comments." },
             { role: "user", content: prompt },
