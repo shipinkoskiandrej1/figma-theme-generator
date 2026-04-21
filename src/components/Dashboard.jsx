@@ -1,20 +1,28 @@
 import { useEffect, useState, useCallback } from "react";
 import { Trash2, RefreshCw } from "lucide-react";
 import { supabase } from "../lib/supabase";
+import { C } from "../utils/theme";
 
 function formatDate(iso) {
-  return new Date(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-    year: "numeric",
-  });
+  return new Date(iso).toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+}
+
+function Skeleton() {
+  return (
+    <div style={{
+      height: 64, borderRadius: 4, background: C.bg3,
+      animation: 'pulse 1.4s ease-in-out infinite',
+    }} />
+  );
 }
 
 function ClientCard({ client, onLoad, onDelete }) {
   const [deleting, setDeleting] = useState(false);
+  const [hovered, setHovered] = useState(false);
+
   const colors = Object.entries(client.theme)
-    .filter(([k]) => k.startsWith("color/") && client.theme[k].startsWith("#"))
-    .slice(0, 8)
+    .filter(([k]) => k.startsWith("color/") && String(client.theme[k]).startsWith("#"))
+    .slice(0, 10)
     .map(([, v]) => v);
 
   const handleDelete = async e => {
@@ -26,26 +34,37 @@ function ClientCard({ client, onLoad, onDelete }) {
   return (
     <div
       onClick={() => onLoad(client)}
-      className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-4 flex items-center gap-4 cursor-pointer hover:border-gray-300 dark:hover:border-gray-700 transition-colors group"
+      onMouseEnter={() => setHovered(true)}
+      onMouseLeave={() => setHovered(false)}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 14,
+        padding: '12px 16px',
+        background: hovered ? C.bg2 : C.bg1,
+        border: `1px solid ${hovered ? C.b3 : C.b2}`,
+        borderRadius: 4, cursor: 'pointer', transition: 'all .15s',
+      }}
     >
       {/* Swatch strip */}
-      <div className="flex rounded-lg overflow-hidden flex-shrink-0 h-8 w-24 border border-gray-100 dark:border-gray-800">
+      <div style={{
+        width: 72, height: 28, borderRadius: 3, overflow: 'hidden',
+        border: `1px solid ${C.b2}`, display: 'flex', flexShrink: 0,
+      }}>
         {colors.map((c, i) => (
-          <div key={i} className="flex-1" style={{ background: c }} />
+          <div key={i} style={{ flex: 1, background: c }} />
         ))}
       </div>
 
       {/* Info */}
-      <div className="flex-1 min-w-0">
-        <div className="text-sm font-semibold text-gray-900 dark:text-gray-50 truncate">
+      <div style={{ flex: 1, minWidth: 0 }}>
+        <div style={{ fontSize: 12, fontWeight: 600, color: C.t1, fontFamily: C.sans, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {client.client_name}
         </div>
-        <div className="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
+        <div style={{ fontSize: 10, color: C.t4, fontFamily: C.sans, marginTop: 2 }}>
           {formatDate(client.created_at)}
         </div>
       </div>
 
-      <span className="text-[10px] text-gray-300 dark:text-gray-600 group-hover:text-gray-400 dark:group-hover:text-gray-500 transition-colors mr-1">
+      <span style={{ fontSize: 10, color: C.t5, fontFamily: C.sans, marginRight: 4, flexShrink: 0 }}>
         Click to load
       </span>
 
@@ -53,12 +72,18 @@ function ClientCard({ client, onLoad, onDelete }) {
       <button
         onClick={handleDelete}
         disabled={deleting}
-        className="h-8 w-8 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 dark:text-gray-500 hover:border-red-300 dark:hover:border-red-700 hover:text-red-500 dark:hover:text-red-400 transition-colors flex-shrink-0 disabled:opacity-40"
+        style={{
+          width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: `1px solid ${C.b3}`, borderRadius: 3,
+          color: C.t4, cursor: deleting ? 'not-allowed' : 'pointer',
+          opacity: deleting ? 0.4 : 1, transition: 'all .15s', flexShrink: 0,
+        }}
+        onMouseEnter={e => { if (!deleting) { e.currentTarget.style.borderColor = '#EF4444'; e.currentTarget.style.color = '#EF4444'; } }}
+        onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t4; }}
       >
         {deleting
-          ? <RefreshCw size={12} className="animate-spin" />
-          : <Trash2 size={12} />
-        }
+          ? <RefreshCw size={11} style={{ animation: 'spin 1s linear infinite' }} />
+          : <Trash2 size={11} />}
       </button>
     </div>
   );
@@ -90,37 +115,59 @@ export default function Dashboard({ onLoadTheme }) {
   };
 
   return (
-    <div className="pt-12 max-w-2xl mx-auto px-4 py-6">
-      <div className="flex items-center justify-between mb-4">
-        <p className="text-xs font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500">
-          Saved Clients
-        </p>
+    <div style={{ maxWidth: 680, margin: '0 auto', padding: '28px 24px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+
+      {/* Header row */}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div>
+          <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+            Saved Clients
+          </div>
+          <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans, marginTop: 3 }}>
+            {!loading && !error && `${clients.length} theme${clients.length !== 1 ? 's' : ''} saved`}
+          </div>
+        </div>
         <button
           onClick={fetchClients}
-          className="h-7 w-7 flex items-center justify-center rounded-lg border border-gray-200 dark:border-gray-700 text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+          style={{
+            width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            background: 'transparent', border: `1px solid ${C.b3}`, borderRadius: 3,
+            color: C.t4, cursor: 'pointer', transition: 'border-color .15s',
+          }}
           title="Refresh"
+          onMouseEnter={e => e.currentTarget.style.borderColor = C.b4}
+          onMouseLeave={e => e.currentTarget.style.borderColor = C.b3}
         >
-          <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
+          <RefreshCw size={11} style={loading ? { animation: 'spin 1s linear infinite' } : {}} />
         </button>
       </div>
 
+      {/* Content */}
       {loading ? (
-        <div className="space-y-2">
-          {[1, 2, 3].map(i => (
-            <div key={i} className="h-20 rounded-xl bg-gray-100 dark:bg-gray-800 animate-pulse" />
-          ))}
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          {[1, 2, 3].map(i => <Skeleton key={i} />)}
         </div>
       ) : error ? (
-        <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
+        <div style={{
+          padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FCA5A5',
+          borderRadius: 4, fontSize: 11, color: '#DC2626', fontFamily: C.sans,
+        }}>
           {error}
         </div>
       ) : clients.length === 0 ? (
-        <div className="text-center py-20 text-sm text-gray-400 dark:text-gray-500">
-          No saved clients yet.<br />
-          <span className="text-xs">Generate a theme and hit "Save to Dashboard".</span>
+        <div style={{
+          display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+          padding: '60px 24px', border: `1px dashed ${C.b3}`, borderRadius: 4, textAlign: 'center',
+        }}>
+          <div style={{ fontSize: 12, fontWeight: 500, color: C.t4, fontFamily: C.sans, marginBottom: 4 }}>
+            No saved clients yet
+          </div>
+          <div style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>
+            Generate a theme and click "Save to Dashboard"
+          </div>
         </div>
       ) : (
-        <div className="space-y-2">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
           {clients.map(client => (
             <ClientCard
               key={client.id}

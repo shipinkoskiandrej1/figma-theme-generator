@@ -1,0 +1,142 @@
+import { C } from "../utils/theme";
+import { contrastRatio } from "../utils/colorUtils";
+import { WCAG_PAIRS } from "../utils/constants";
+
+function darken(hex, amt) {
+  const r = Math.max(0, parseInt(hex.slice(1,3),16) - amt);
+  const g = Math.max(0, parseInt(hex.slice(3,5),16) - amt);
+  const b = Math.max(0, parseInt(hex.slice(5,7),16) - amt);
+  return '#' + [r,g,b].map(v => v.toString(16).padStart(2,'0')).join('');
+}
+
+function Badge({ pass, label }) {
+  return (
+    <span style={{
+      padding: '2px 6px', borderRadius: 3, fontSize: 9.5, fontWeight: 700, letterSpacing: '.06em',
+      background: pass ? '#10B98116' : '#EF444416',
+      color: pass ? '#10B981' : '#EF4444',
+      border: `1px solid ${pass ? '#10B98130' : '#EF444430'}`,
+      fontFamily: C.sans,
+    }}>
+      {label} {pass ? '✓' : '✗'}
+    </span>
+  );
+}
+
+function Skeleton({ h = 14, style }) {
+  return <div style={{ height: h, borderRadius: 3, background: C.bg3, animation: 'pulse 1.4s ease-in-out infinite', ...style }} />;
+}
+
+export default function AccessibilityTab({ theme, loading }) {
+  if (!theme) return null;
+
+  const pairs = WCAG_PAIRS.filter(p => theme[p.fg] && theme[p.bg]).map(p => {
+    const ratio = contrastRatio(theme[p.fg], theme[p.bg]);
+    const ratioRounded = Math.round(ratio * 10) / 10;
+    const aa = ratio >= 4.5;
+    const aaa = ratio >= 7;
+    return { ...p, fgHex: theme[p.fg], bgHex: theme[p.bg], ratio: ratioRounded, aa, aaa, alt: !aa ? darken(theme[p.fg], 40) : null };
+  });
+
+  const passAA  = pairs.filter(p => p.aa).length;
+  const passAAA = pairs.filter(p => p.aaa).length;
+  const total   = pairs.length;
+
+  return (
+    <div style={{ padding: '24px 24px 80px', display: 'flex', flexDirection: 'column', gap: 24 }}>
+
+      {/* Summary stats */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14 }}>
+        {[
+          ['Total Pairs',  total,          C.t1,      C.bg1,     C.b2],
+          ['AA Pass',      passAA,         '#059669', '#D1FAE5', '#A7F3D0'],
+          ['AAA Pass',     passAAA,        '#7C3AED', '#EDE9FE', '#C4B5FD'],
+          ['Needs Fix',    total - passAA, '#DC2626', '#FEE2E2', '#FCA5A5'],
+        ].map(([label, val, textColor, bgColor, borderColor]) => (
+          <div key={label} style={{
+            padding: '16px 20px', background: bgColor,
+            border: `1px solid ${borderColor}`, borderRadius: 6,
+            display: 'flex', flexDirection: 'column', gap: 4,
+          }}>
+            <div style={{ fontSize: 26, fontWeight: 700, color: textColor, lineHeight: 1, fontFamily: C.mono }}>{val}</div>
+            <div style={{ fontSize: 11, fontWeight: 600, color: textColor, opacity: .7, letterSpacing: '.05em', textTransform: 'uppercase', fontFamily: C.sans }}>{label}</div>
+          </div>
+        ))}
+      </div>
+
+      {/* Standard explainers */}
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+        {[
+          ['AA — Minimum Standard', '4.5:1', 'Required for normal text. 3:1 for large text (18pt+ or 14pt bold). WCAG 2.1 Level AA compliance required by most accessibility laws (ADA, AODA, EN 301 549).', '#059669'],
+          ['AAA — Enhanced Standard', '7:1', 'Highest level of contrast. Required for users with low vision. Recommended for body text in enterprise and government applications.', '#7C3AED'],
+        ].map(([title, ratio, desc, color]) => (
+          <div key={title} style={{ padding: '16px 18px', background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6, display: 'flex', gap: 14, alignItems: 'flex-start' }}>
+            <div style={{ width: 36, height: 36, borderRadius: 6, background: color + '18', border: `1px solid ${color}35`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+              <span style={{ fontFamily: C.mono, fontSize: 10, fontWeight: 700, color }}>{ratio}</span>
+            </div>
+            <div>
+              <div style={{ fontSize: 12, fontWeight: 600, color: C.t1, marginBottom: 4, fontFamily: C.sans }}>{title}</div>
+              <div style={{ fontSize: 11, color: C.t3, lineHeight: 1.65, fontFamily: C.sans }}>{desc}</div>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      {/* Full pair grid */}
+      <div>
+        <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em', textTransform: 'uppercase', marginBottom: 14, fontFamily: C.sans }}>
+          Color Pair Analysis
+        </div>
+
+        {loading ? (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+            {[1,2,3,4,5].map(i => <Skeleton key={i} h={180} />)}
+          </div>
+        ) : (
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 14 }}>
+            {pairs.map(({ label, fgHex, bgHex, ratio, aa, aaa, alt }) => (
+              <div key={label} style={{ border: `1px solid ${C.b2}`, borderRadius: 6, background: C.bg1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
+                {/* Preview */}
+                <div style={{ padding: '20px 20px 16px', background: bgHex, minHeight: 80, display: 'flex', flexDirection: 'column', gap: 6 }}>
+                  <span style={{ fontSize: 20, fontWeight: 700, color: fgHex, lineHeight: 1, fontFamily: C.sans }}>Aa</span>
+                  <span style={{ fontSize: 13, color: fgHex, opacity: .85, fontFamily: C.sans }}>The quick brown fox jumps</span>
+                  <span style={{ fontSize: 11, color: fgHex, opacity: .65, fontFamily: C.sans }}>over the lazy dog 0123456</span>
+                </div>
+                {/* Pair + ratio */}
+                <div style={{ padding: '14px 18px', borderBottom: `1px solid ${C.b2}`, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <div style={{ fontSize: 11, fontWeight: 600, color: C.t1, fontFamily: C.sans }}>{label}</div>
+                  <div style={{ fontFamily: C.mono, fontSize: 18, fontWeight: 700, color: aa ? '#059669' : '#DC2626' }}>{ratio}:1</div>
+                </div>
+                {/* Colors */}
+                <div style={{ padding: '12px 18px', borderBottom: `1px solid ${C.b2}`, display: 'flex', gap: 16 }}>
+                  {[['Text', fgHex], ['Background', bgHex]].map(([lbl, hex]) => (
+                    <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                      <div style={{ width: 12, height: 12, borderRadius: 2, background: hex, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0 }} />
+                      <div>
+                        <div style={{ fontSize: 9, color: C.t4, fontWeight: 600, letterSpacing: '.06em', textTransform: 'uppercase', fontFamily: C.sans }}>{lbl}</div>
+                        <div style={{ fontFamily: C.mono, fontSize: 10, color: C.t2 }}>{hex.toUpperCase()}</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {/* Badges */}
+                <div style={{ padding: '12px 18px', display: 'flex', gap: 8 }}>
+                  <Badge pass={aa}  label="AA" />
+                  <Badge pass={aaa} label="AAA" />
+                </div>
+                {/* Fix */}
+                {alt && (
+                  <div style={{ padding: '10px 18px', background: '#FFFBEB', borderTop: '1px solid #FDE68A', display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <span style={{ fontSize: 10, color: '#92400E', flex: 1, fontWeight: 500, fontFamily: C.sans }}>💡 Suggested fix</span>
+                    <div style={{ width: 14, height: 14, borderRadius: 2, background: alt, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0 }} />
+                    <span style={{ fontFamily: C.mono, fontSize: 10, color: '#92400E', fontWeight: 600 }}>{alt}</span>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

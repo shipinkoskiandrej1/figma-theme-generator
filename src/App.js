@@ -1,16 +1,18 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Header from "./components/Header";
-import GeneratorForm from "./components/GeneratorForm";
-import SwatchStrip from "./components/SwatchStrip";
-import WcagChecker from "./components/WcagChecker";
+import InputStrip from "./components/InputStrip";
+import ProportionBar from "./components/ProportionBar";
 import VariableTable from "./components/VariableTable";
+import WcagChecker from "./components/WcagChecker";
+import AccessibilityTab from "./components/AccessibilityTab";
 import LivePreview from "./components/LivePreview";
 import FigmaExport from "./components/FigmaExport";
 import SaveModal from "./components/SaveModal";
 import Dashboard from "./components/Dashboard";
 import { isValidHex } from "./utils/colorUtils";
 import { supabase } from "./lib/supabase";
-import { BookmarkPlus, Sparkles } from "lucide-react";
+import { C } from "./utils/theme";
+import { BookmarkPlus } from "lucide-react";
 
 const DEFAULT_COLORS = {
   primary:   { hex: "#6366F1", input: "#6366F1" },
@@ -19,31 +21,32 @@ const DEFAULT_COLORS = {
 };
 
 export default function App() {
-  const [dark, setDark] = useState(() => localStorage.getItem("fg-dark") === "true");
-  const [view, setView] = useState("generator");
+  // Layout state
+  const [view, setView]           = useState("generator"); // 'generator' | 'dashboard'
+  const [activeTab, setActiveTab] = useState("Variables");
 
-  const [colors, setColors] = useState(DEFAULT_COLORS);
-  const [pageStyle, setPageStyle] = useState("light");
-  const [mood, setMood] = useState("");
-  const [companyName, setCompanyName] = useState("");
-  const [companyLogo, setCompanyLogo] = useState("");
+  // Generator inputs
+  const [colors, setColors]               = useState(DEFAULT_COLORS);
+  const [pageStyle, setPageStyle]         = useState("light");
+  const [mood, setMood]                   = useState("");
+  const [companyName, setCompanyName]     = useState("");
+  const [companyLogo, setCompanyLogo]     = useState("");
   const [collectionName, setCollectionName] = useState("Theme");
 
+  // Output state
   const [loading, setLoading] = useState(false);
-  const [theme, setTheme] = useState(null);
-  const [error, setError] = useState(null);
+  const [theme, setTheme]     = useState(null);
+  const [error, setError]     = useState(null);
+  const [aiStatus, setAiStatus] = useState(null);
 
+  // Save state
   const [showSaveModal, setShowSaveModal] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState(null);
+  const [saving, setSaving]               = useState(false);
+  const [saveError, setSaveError]         = useState(null);
 
   const apiKey = process.env.REACT_APP_OPENAI_API_KEY || "";
 
-  useEffect(() => {
-    document.documentElement.classList.toggle("dark", dark);
-    localStorage.setItem("fg-dark", dark);
-  }, [dark]);
-
+  // ── Color update helpers ──────────────────────────────────────────────────
   const updateColor = (key, value, fromPicker) => {
     setColors(prev => {
       if (fromPicker) {
@@ -64,11 +67,15 @@ export default function App() {
     setTheme(t => ({ ...t, [key]: value }));
   };
 
+  // ── Generate ─────────────────────────────────────────────────────────────
   const generate = async () => {
     if (!apiKey) { setError("REACT_APP_OPENAI_API_KEY is not set in .env."); return; }
     if (!isValidHex(colors.primary.hex)) { setError("Please enter a valid primary hex color."); return; }
 
-    setLoading(true); setError(null); setTheme(null);
+    setLoading(true);
+    setError(null);
+    setTheme(null);
+    setAiStatus("Generating theme…");
 
     const { primary, secondary, tertiary } = colors;
     const hasSecondary = isValidHex(secondary.hex);
@@ -123,14 +130,21 @@ Return ONLY valid JSON, no markdown, no comments:
       const data = await res.json();
       if (data.error) throw new Error(data.error.message);
       const text = data.choices[0].message.content;
-      setTheme(JSON.parse(text.replace(/```json|```/g, "").trim()));
+      const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
+      setTheme(parsed);
+      setAiStatus("✓ Theme generated");
+      setActiveTab("Variables");
+      setView("generator");
+      setTimeout(() => setAiStatus(null), 3000);
     } catch (e) {
       setError(e.message || "Generation failed. Please try again.");
+      setAiStatus(null);
     } finally {
       setLoading(false);
     }
   };
 
+  // ── Save / Load ───────────────────────────────────────────────────────────
   const handleSave = async (clientName) => {
     setSaving(true);
     setSaveError(null);
@@ -147,92 +161,182 @@ Return ONLY valid JSON, no markdown, no comments:
   const handleLoadTheme = (client) => {
     setTheme(client.theme);
     setView("generator");
+    setActiveTab("Variables");
+    setAiStatus(`✓ Loaded: ${client.client_name}`);
+    setTimeout(() => setAiStatus(null), 3000);
   };
 
+  // ── Tab content ───────────────────────────────────────────────────────────
+  const renderTab = () => {
+    if (!theme) return (
+      <div style={{
+        display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
+        flex: 1, gap: 10, color: C.t4, userSelect: 'none',
+      }}>
+        <div style={{
+          width: 40, height: 40, borderRadius: 8, background: C.bg3,
+          display: 'flex', alignItems: 'center', justifyContent: 'center',
+          fontSize: 18,
+        }}>⟡</div>
+        <div style={{ fontSize: 12, fontWeight: 500, color: C.t3, fontFamily: C.sans }}>No theme generated yet</div>
+        <div style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>Enter colors above and click Generate</div>
+      </div>
+    );
+
+    if (activeTab === "Variables") return (
+      <div style={{ display: 'flex', gap: 16, padding: '20px 20px 80px', alignItems: 'flex-start' }}>
+        {/* Left: token table */}
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Save button */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+            <button
+              onClick={() => { setSaveError(null); setShowSaveModal(true); }}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 6,
+                padding: '6px 12px', height: 30,
+                background: 'transparent', border: `1px solid ${C.b3}`,
+                borderRadius: 4, fontSize: 11, fontWeight: 500, fontFamily: C.sans,
+                color: C.t3, cursor: 'pointer', transition: 'all .15s',
+              }}
+              onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+              onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
+            >
+              <BookmarkPlus size={11} />
+              Save to Dashboard
+            </button>
+            {saveError && (
+              <span style={{ fontSize: 11, color: '#EF4444', fontFamily: C.sans }}>{saveError}</span>
+            )}
+          </div>
+          <VariableTable theme={theme} onEdit={updateThemeToken} />
+        </div>
+
+        {/* Right: proportion + wcag */}
+        <div style={{ width: 300, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          {/* Proportion bar panel */}
+          <div style={{ background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{
+              padding: '9px 14px', borderBottom: `1px solid ${C.b2}`,
+              fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em',
+              textTransform: 'uppercase', fontFamily: C.sans,
+              borderTop: `2px solid ${C.accent}`,
+            }}>
+              60 / 30 / 10 Rule
+            </div>
+            <div style={{ padding: 14 }}>
+              <ProportionBar
+                primary={colors.primary.hex}
+                secondary={colors.secondary.hex}
+                tertiary={colors.tertiary.hex}
+              />
+            </div>
+          </div>
+
+          {/* WCAG checker panel */}
+          <div style={{ background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 4, overflow: 'hidden' }}>
+            <div style={{
+              padding: '9px 14px', borderBottom: `1px solid ${C.b2}`,
+              fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em',
+              textTransform: 'uppercase', fontFamily: C.sans,
+              borderTop: `2px solid ${C.accent}`,
+            }}>
+              Contrast Check
+            </div>
+            <div style={{ padding: 14 }}>
+              <WcagChecker theme={theme} />
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+
+    if (activeTab === "Accessibility") return (
+      <AccessibilityTab theme={theme} loading={loading} />
+    );
+
+    if (activeTab === "Preview") return (
+      <div style={{ padding: '20px 20px 80px' }}>
+        <LivePreview
+          theme={theme}
+          companyName={companyName}
+          companyLogo={companyLogo}
+          pageStyle={pageStyle}
+        />
+      </div>
+    );
+
+    if (activeTab === "Export") return (
+      <div style={{ padding: '20px 20px 80px', maxWidth: 720 }}>
+        <FigmaExport
+          theme={theme}
+          collectionName={collectionName}
+          onCollectionNameChange={setCollectionName}
+        />
+      </div>
+    );
+
+    return null;
+  };
+
+  // ── Error banner ──────────────────────────────────────────────────────────
+  const errorBanner = error && (
+    <div style={{
+      padding: '8px 16px', background: '#FEF2F2', borderBottom: '1px solid #FCA5A5',
+      fontSize: 11, color: '#DC2626', fontFamily: C.sans, flexShrink: 0,
+      display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+    }}>
+      <span>{error}</span>
+      <button onClick={() => setError(null)} style={{ background: 'none', border: 'none', color: '#DC2626', cursor: 'pointer', fontSize: 14, lineHeight: 1 }}>×</button>
+    </div>
+  );
+
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-950 transition-colors">
+    <div style={{
+      display: 'flex', flexDirection: 'column', height: '100vh',
+      overflow: 'hidden', background: C.bg0, fontFamily: C.sans,
+    }}>
+      {/* Fixed header */}
       <Header
-        dark={dark}
-        onToggle={() => setDark(d => !d)}
-        companyName={companyName}
-        companyLogo={companyLogo}
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        generated={!!theme}
         view={view}
         onViewChange={setView}
+        companyName={companyName}
+        companyLogo={companyLogo}
+        aiStatus={aiStatus}
+        loading={loading}
       />
 
-      {view === "dashboard" ? (
-        <Dashboard onLoadTheme={handleLoadTheme} />
-      ) : (
-        <div className="pt-12 max-w-6xl mx-auto px-6 py-6 flex gap-5 items-start">
+      {/* Input strip (always visible) */}
+      <InputStrip
+        colors={colors}
+        onColorChange={updateColor}
+        pageStyle={pageStyle}
+        onPageStyleChange={setPageStyle}
+        mood={mood}
+        onMoodChange={setMood}
+        companyName={companyName}
+        onCompanyNameChange={setCompanyName}
+        companyLogo={companyLogo}
+        onCompanyLogoChange={setCompanyLogo}
+        loading={loading}
+        onGenerate={generate}
+      />
 
-          {/* ── Left: Generator form (sticky) ── */}
-          <div className="w-72 flex-shrink-0 sticky top-12 max-h-[calc(100vh-3rem)] overflow-y-auto pb-6 space-y-3">
-            <GeneratorForm
-              colors={colors}
-              onColorChange={updateColor}
-              pageStyle={pageStyle}
-              onPageStyleChange={setPageStyle}
-              mood={mood}
-              onMoodChange={setMood}
-              companyName={companyName}
-              onCompanyNameChange={setCompanyName}
-              companyLogo={companyLogo}
-              onCompanyLogoChange={setCompanyLogo}
-              collectionName={collectionName}
-              onCollectionNameChange={setCollectionName}
-              loading={loading}
-              onGenerate={generate}
-            />
-            {error && (
-              <div className="text-sm text-red-600 dark:text-red-400 bg-red-50 dark:bg-red-950/30 border border-red-200 dark:border-red-800 rounded-xl px-4 py-3">
-                {error}
-              </div>
-            )}
-          </div>
+      {/* Error banner */}
+      {errorBanner}
 
-          {/* ── Right: Generated theme ── */}
-          <div className="flex-1 min-w-0 space-y-3 pb-6">
-            {theme ? (
-              <>
-                <SwatchStrip theme={theme} onEdit={updateThemeToken} />
+      {/* Scrollable content */}
+      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
+        {view === "dashboard"
+          ? <Dashboard onLoadTheme={handleLoadTheme} />
+          : renderTab()
+        }
+      </div>
 
-                <div className="flex items-center gap-3">
-                  <button
-                    onClick={() => { setSaveError(null); setShowSaveModal(true); }}
-                    className="flex items-center gap-2 px-4 py-2 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:border-gray-300 dark:hover:border-gray-600 hover:bg-white dark:hover:bg-gray-900 transition-colors"
-                  >
-                    <BookmarkPlus size={13} />
-                    Save to Dashboard
-                  </button>
-                  {saveError && (
-                    <span className="text-xs text-red-500 dark:text-red-400">{saveError}</span>
-                  )}
-                </div>
-
-                <WcagChecker theme={theme} />
-                <VariableTable theme={theme} onEdit={updateThemeToken} />
-                <LivePreview theme={theme} companyName={companyName} companyLogo={companyLogo} />
-                <FigmaExport theme={theme} collectionName={collectionName} />
-              </>
-            ) : (
-              /* Empty state */
-              <div className="flex flex-col items-center justify-center h-96 rounded-xl border-2 border-dashed border-gray-200 dark:border-gray-800 text-center px-8">
-                <div className="w-10 h-10 rounded-xl bg-gray-100 dark:bg-gray-800 flex items-center justify-center mb-3">
-                  <Sparkles size={18} className="text-gray-400 dark:text-gray-500" />
-                </div>
-                <p className="text-sm font-medium text-gray-500 dark:text-gray-400 mb-1">
-                  No theme generated yet
-                </p>
-                <p className="text-xs text-gray-400 dark:text-gray-500">
-                  Configure your colors on the left and hit Generate.
-                </p>
-              </div>
-            )}
-          </div>
-
-        </div>
-      )}
-
+      {/* Save modal */}
       {showSaveModal && (
         <SaveModal
           onSave={handleSave}

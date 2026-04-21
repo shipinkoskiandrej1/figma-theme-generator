@@ -1,3 +1,33 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+*, *::before, *::after { box-sizing: border-box; }
+html, body { height: 100%; margin: 0; }
+body {
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #F2F5FA;
+  color: #0C1221;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #CBD3E6; border-radius: 4px; }
+
+input[type=color] {
+  appearance: none;
+  -webkit-appearance: none;
+  border: none; padding: 0; background: none;
+  cursor: pointer; width: 100%; height: 100%;
+  opacity: 0; position: absolute; inset: 0;
+}
+input:focus, button:focus, select:focus { outline: none; }
+button { cursor: pointer; font-family: 'DM Sans', sans-serif; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes pulse { 0%, 100% { opacity: .4; } 50% { opacity: 1; } }

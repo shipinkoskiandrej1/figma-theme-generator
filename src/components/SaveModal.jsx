@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { RefreshCw } from "lucide-react";
+import { C } from "../utils/theme";
 
 export default function SaveModal({ onSave, onCancel, saving }) {
   const [name, setName] = useState("");
@@ -10,40 +10,76 @@ export default function SaveModal({ onSave, onCancel, saving }) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm"
       onClick={e => e.target === e.currentTarget && onCancel()}
+      style={{
+        position: 'fixed', inset: 0, zIndex: 100,
+        display: 'flex', alignItems: 'center', justifyContent: 'center',
+        background: 'rgba(12,18,33,.45)', backdropFilter: 'blur(3px)',
+      }}
     >
-      <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl p-6 w-80 shadow-2xl">
-        <h3 className="text-sm font-semibold text-gray-900 dark:text-gray-50 mb-1">
-          Save to Dashboard
-        </h3>
-        <p className="text-xs text-gray-400 dark:text-gray-500 mb-4">
-          Give this client a name to find the theme later.
-        </p>
+      <div style={{
+        background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6,
+        padding: 24, width: 320, boxShadow: '0 8px 32px rgba(12,18,33,.12)',
+        display: 'flex', flexDirection: 'column', gap: 16,
+      }}>
+        {/* Title */}
+        <div>
+          <div style={{ fontSize: 13, fontWeight: 600, color: C.t1, marginBottom: 3, fontFamily: C.sans }}>
+            Save to Dashboard
+          </div>
+          <div style={{ fontSize: 11, color: C.t4, lineHeight: 1.5, fontFamily: C.sans }}>
+            Give this client a name to find the theme later.
+          </div>
+        </div>
 
+        {/* Input */}
         <input
           type="text"
           value={name}
           onChange={e => setName(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && submit()}
+          onKeyDown={e => e.key === 'Enter' && submit()}
           placeholder="Client name"
           autoFocus
-          className="w-full h-9 px-3 text-sm rounded-lg border border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 outline-none focus:border-gray-400 dark:focus:border-gray-500 transition-colors mb-4"
+          style={{
+            height: 34, padding: '0 10px', background: C.bg3,
+            border: `1px solid ${C.b3}`, borderRadius: 4,
+            color: C.t1, fontSize: 12, fontFamily: C.sans, outline: 'none',
+            transition: 'border-color .15s',
+          }}
+          onFocus={e => e.target.style.borderColor = C.accent}
+          onBlur={e => e.target.style.borderColor = C.b3}
         />
 
-        <div className="flex gap-2">
+        {/* Actions */}
+        <div style={{ display: 'flex', gap: 8 }}>
           <button
             onClick={onCancel}
-            className="flex-1 h-9 text-xs font-medium rounded-lg border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors"
+            style={{
+              flex: 1, height: 32, background: 'transparent',
+              border: `1px solid ${C.b3}`, borderRadius: 4,
+              color: C.t3, fontSize: 11, fontWeight: 500, fontFamily: C.sans,
+              cursor: 'pointer', transition: 'border-color .15s',
+            }}
+            onMouseEnter={e => e.target.style.borderColor = C.b4}
+            onMouseLeave={e => e.target.style.borderColor = C.b3}
           >
             Cancel
           </button>
           <button
             onClick={submit}
             disabled={!name.trim() || saving}
-            className="flex-1 h-9 flex items-center justify-center gap-1.5 text-xs font-medium rounded-lg bg-gray-900 dark:bg-gray-50 text-white dark:text-gray-900 disabled:opacity-40 transition-opacity"
+            style={{
+              flex: 1, height: 32,
+              background: !name.trim() || saving ? C.b3 : C.accent,
+              border: 'none', borderRadius: 4,
+              color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: C.sans,
+              cursor: !name.trim() || saving ? 'not-allowed' : 'pointer',
+              transition: 'background .15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
+            }}
           >
-            {saving ? <><RefreshCw size={12} className="animate-spin" /> Saving…</> : "Save"}
+            {saving
+              ? <><span style={{ display: 'inline-block', animation: 'spin 1s linear infinite' }}>⟳</span> Saving…</>
+              : 'Save'}
           </button>
         </div>
       </div>

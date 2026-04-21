@@ -1,113 +1,133 @@
 import { useState, useRef } from "react";
-import { Copy, Check } from "lucide-react";
+import { C } from "../utils/theme";
 import { GROUPS } from "../utils/constants";
 
 function copyToClipboard(text, cb) {
-  if (navigator.clipboard?.writeText) {
-    navigator.clipboard.writeText(text).then(cb).catch(() => fallback(text, cb));
-  } else {
-    fallback(text, cb);
-  }
+  if (navigator.clipboard?.writeText) navigator.clipboard.writeText(text).then(cb).catch(() => fallback(text, cb));
+  else fallback(text, cb);
 }
-
 function fallback(text, cb) {
-  const ta = Object.assign(document.createElement("textarea"), {
-    value: text,
-    style: "position:fixed;top:-9999px;opacity:0",
-  });
-  document.body.appendChild(ta);
-  ta.focus();
-  ta.select();
+  const ta = Object.assign(document.createElement("textarea"), { value: text, style: "position:fixed;top:-9999px;opacity:0" });
+  document.body.appendChild(ta); ta.focus(); ta.select();
   try { document.execCommand("copy"); cb?.(); } catch {}
   document.body.removeChild(ta);
 }
 
 export default function VariableTable({ theme, onEdit }) {
+  const [editing, setEditing] = useState(null);
+  const [editVal, setEditVal] = useState('');
   const [copied, setCopied] = useState(null);
   const colorRefs = useRef({});
 
-  const copyVal = (key, val) => {
-    copyToClipboard(val, () => {
-      setCopied(key);
-      setTimeout(() => setCopied(null), 1500);
-    });
+  const startEdit = (key, val) => { setEditing(key); setEditVal(val); };
+  const commitEdit = (key) => {
+    if (/^#[0-9A-Fa-f]{6}$/.test(editVal)) onEdit(key, editVal);
+    setEditing(null);
   };
 
+  const copyVal = (key, val) => {
+    copyToClipboard(val, () => { setCopied(key); setTimeout(() => setCopied(null), 1500); });
+  };
+
+  const colorVars = GROUPS.flatMap(g => g.vars).filter(v => v.type === 'color' && theme[v.key]);
+  const rowCount = colorVars.length;
+
   return (
-    <div className="bg-white dark:bg-gray-900 border border-gray-200 dark:border-gray-800 rounded-xl overflow-hidden">
-      {GROUPS.map((group, gi) => (
-        <div key={gi}>
-          <div
-            className={`px-4 py-2 text-[10px] font-semibold uppercase tracking-widest text-gray-400 dark:text-gray-500 bg-gray-50 dark:bg-gray-900/50 ${
-              gi > 0 ? "border-t border-gray-200 dark:border-gray-800" : ""
-            }`}
-          >
-            {group.name}
-          </div>
+    <div style={{ display: 'flex', flexDirection: 'column', borderRadius: 3, overflow: 'hidden', border: `1px solid ${C.b2}` }}>
+      {GROUPS.map((group) => {
+        const rows = group.vars.filter(v => theme[v.key]);
+        if (!rows.length) return null;
+        return (
+          <div key={group.name}>
+            {/* Group header */}
+            <div style={{
+              padding: '9px 14px', fontSize: 9, fontWeight: 600, color: C.t5,
+              letterSpacing: '.12em', textTransform: 'uppercase', background: C.bg3,
+              borderBottom: `1px solid ${C.b2}`, fontFamily: C.sans,
+            }}>
+              {group.name}
+            </div>
 
-          {group.vars.map((v, vi) => {
-            const val = theme[v.key];
-            if (!val) return null;
-            return (
-              <div
-                key={vi}
-                className="flex items-center gap-3 px-4 py-2.5 border-t border-gray-100 dark:border-gray-800"
-              >
-                {/* Token name + desc */}
-                <div className="flex-1 min-w-0">
-                  <div className="font-mono text-xs text-gray-800 dark:text-gray-200 truncate">
-                    {v.key}
-                  </div>
-                  <div className="text-[11px] text-gray-400 dark:text-gray-500 mt-0.5">{v.desc}</div>
-                </div>
-
-                {/* Value */}
-                <div className="flex items-center gap-2 flex-shrink-0">
-                  {v.type === "color" ? (
-                    <>
-                      {/* Clickable swatch opens native color picker */}
-                      <div
-                        className="w-6 h-6 rounded-md border border-gray-200 dark:border-gray-700 cursor-pointer hover:scale-110 transition-transform flex-shrink-0"
-                        style={{ background: val }}
-                        title="Click to edit"
-                        onClick={() => colorRefs.current[v.key]?.click()}
-                      />
-                      <input
-                        type="color"
-                        ref={el => (colorRefs.current[v.key] = el)}
-                        value={val}
-                        onChange={e => onEdit(v.key, e.target.value)}
-                        className="sr-only"
-                      />
-                      <span className="font-mono text-xs text-gray-600 dark:text-gray-400 w-[58px]">
-                        {val}
-                      </span>
-                    </>
-                  ) : (
-                    <span className="text-xs italic text-gray-600 dark:text-gray-400">{val}</span>
-                  )}
-                </div>
-
-                {/* Copy button */}
-                <button
-                  onClick={() => copyVal(v.key, val)}
-                  className={`w-7 h-7 flex items-center justify-center rounded-lg border transition-colors flex-shrink-0 ${
-                    copied === v.key
-                      ? "border-green-300 dark:border-green-700 bg-green-50 dark:bg-green-950/30"
-                      : "border-gray-200 dark:border-gray-700 bg-gray-50 dark:bg-gray-900 hover:border-gray-300 dark:hover:border-gray-600"
-                  }`}
+            {rows.map((v, i) => {
+              const val = theme[v.key];
+              const isEditing = editing === v.key;
+              return (
+                <div
+                  key={v.key}
+                  onMouseEnter={e => e.currentTarget.style.background = C.bg3}
+                  onMouseLeave={e => e.currentTarget.style.background = i % 2 ? C.bg2 : C.bg1}
+                  style={{
+                    display: 'flex', alignItems: 'center', gap: 10, padding: '7px 12px',
+                    background: i % 2 ? C.bg2 : C.bg1,
+                    borderBottom: `1px solid ${C.b1}`, transition: 'background .1s',
+                  }}
                 >
-                  {copied === v.key ? (
-                    <Check size={11} className="text-green-600 dark:text-green-400" />
-                  ) : (
-                    <Copy size={11} className="text-gray-400 dark:text-gray-500" />
+                  {/* Swatch */}
+                  {v.type === 'color' && (
+                    <div
+                      style={{ width: 16, height: 16, borderRadius: 3, background: val, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0, cursor: 'pointer' }}
+                      onClick={() => colorRefs.current[v.key]?.click()}
+                    >
+                      <input type="color" ref={el => colorRefs.current[v.key] = el} value={val}
+                        onChange={e => onEdit(v.key, e.target.value)}
+                        style={{ position: 'absolute', opacity: 0, width: 0, height: 0 }} />
+                    </div>
                   )}
-                </button>
-              </div>
-            );
-          })}
-        </div>
-      ))}
+
+                  {/* Token name */}
+                  <span style={{ flex: 1, fontFamily: C.mono, fontSize: 10.5, color: C.t3, letterSpacing: '.01em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    {v.key}
+                  </span>
+
+                  {/* Value / edit input */}
+                  {isEditing ? (
+                    <input
+                      value={editVal}
+                      onChange={e => setEditVal(e.target.value)}
+                      onBlur={() => commitEdit(v.key)}
+                      onKeyDown={e => e.key === 'Enter' && commitEdit(v.key)}
+                      autoFocus
+                      style={{
+                        width: 80, background: C.bg4, border: `1px solid ${C.accent}`, borderRadius: 3,
+                        padding: '2px 6px', fontFamily: C.mono, fontSize: 10.5, color: C.t1, letterSpacing: '.04em',
+                      }}
+                    />
+                  ) : (
+                    <span style={{ fontFamily: C.mono, fontSize: 10.5, color: C.t1, letterSpacing: '.04em', textTransform: 'uppercase' }}>
+                      {v.type === 'color' ? val : <em style={{ fontFamily: C.sans, fontStyle: 'italic', fontSize: 11, color: C.t2 }}>{val}</em>}
+                    </span>
+                  )}
+
+                  {/* Edit button */}
+                  {v.type === 'color' && (
+                    <button
+                      onClick={() => isEditing ? commitEdit(v.key) : startEdit(v.key, val)}
+                      style={{
+                        background: 'none', border: 'none', color: isEditing ? C.accent : C.t5,
+                        fontSize: 12, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0,
+                      }}
+                    >
+                      {isEditing ? '✓' : '✎'}
+                    </button>
+                  )}
+
+                  {/* Copy button */}
+                  <button
+                    onClick={() => copyVal(v.key, val)}
+                    style={{
+                      background: 'none', border: 'none', color: copied === v.key ? '#10B981' : C.t5,
+                      fontSize: 10, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0,
+                    }}
+                    title="Copy value"
+                  >
+                    {copied === v.key ? '✓' : '⎘'}
+                  </button>
+                </div>
+              );
+            })}
+          </div>
+        );
+      })}
     </div>
   );
 }
