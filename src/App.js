@@ -9,7 +9,7 @@ import LivePreview from "./components/LivePreview";
 import FigmaExport from "./components/FigmaExport";
 import SaveModal from "./components/SaveModal";
 import Dashboard from "./components/Dashboard";
-import { isValidHex } from "./utils/colorUtils";
+import { isValidHex, generateNeutralScale } from "./utils/colorUtils";
 import { supabase } from "./lib/supabase";
 import { C } from "./utils/theme";
 
@@ -101,8 +101,19 @@ export default function App() {
 
     const { primary, secondary, tertiary } = colors;
 
+    // Pre-compute the brand-tinted neutral scale algorithmically (8% saturation toward brand hue)
+    const neutralScale = generateNeutralScale(primary.hex);
+    const neutralLines = Object.entries(neutralScale)
+      .map(([step, hex]) => `  color/palette/neutral/${step}: ${hex}`)
+      .join("\n");
+
     // Semantic JSON template (same keys for light and dark)
     const SEM = `"color/bg/base":"#hex","color/bg/surface":"#hex","color/bg/elevated":"#hex","color/bg/overlay":"#hex","color/bg/inverse":"#hex","color/text/primary":"#hex","color/text/secondary":"#hex","color/text/muted":"#hex","color/text/disabled":"#hex","color/text/on-brand":"#hex","color/text/accent":"#hex","color/border/default":"#hex","color/border/subtle":"#hex","color/border/strong":"#hex","color/border/focus":"#hex","color/action/primary/bg":"#hex","color/action/primary/bg-hover":"#hex","color/action/primary/bg-subtle":"#hex","color/action/primary/text":"#hex","color/action/secondary/bg":"#hex","color/action/secondary/bg-hover":"#hex","color/action/secondary/bg-subtle":"#hex","color/action/secondary/text":"#hex","color/link/default":"#hex","color/link/hover":"#hex","font/family/display":"Font Name","font/family/body":"Font Name"`;
+
+    // Inject pre-computed neutrals into the JSON template (replace #hex for neutral keys)
+    const neutralJsonEntries = Object.entries(neutralScale)
+      .map(([step, hex]) => `"color/palette/neutral/${step}":"${hex}"`)
+      .join(",");
 
     const prompt = `You are a senior design systems expert. Generate a complete two-layer design token system.
 
@@ -117,12 +128,10 @@ Brand scale rules:
 - hover variants: ~15% darker than base
 - subtle variants: very light tint (~8-12% opacity blended onto white)
 
-Neutral scale (0 → 950): 12 steps from near-white to near-black, slightly tinted toward the primary hue.
-  0=#hex (near white, e.g. #FAFAFA or #FFFFFF)
-  50, 100, 200, 300, 400 = progressively darker light grays
-  500 = true mid-tone
-  600, 700, 800, 900 = progressively darker
-  950 = near-black (not pure black, e.g. #0C1221 or similar with brand tint)
+Neutral scale — PRE-COMPUTED, use these EXACT values (do NOT change them):
+${neutralLines}
+These neutrals are algorithmically generated with 8% saturation toward the brand hue.
+Use them exactly as-is in the primitives section and base all semantic neutral decisions on these steps.
 
 LAYER 2 — SEMANTIC TOKENS (generate BOTH Light AND Dark modes):
 
@@ -199,7 +208,7 @@ Dark mode alias guidance (inverted — neutral/950 = darkest bg):
   link/* → a brand variant
 
 Return ONLY valid JSON. No markdown, no comments, no explanation. Every color value must be a valid 6-digit hex (#RRGGBB). Every alias value must be an exact primitive key:
-{"primitives":{"color/palette/brand/primary":"${primary.hex}","color/palette/brand/primary-hover":"#hex","color/palette/brand/primary-subtle":"#hex","color/palette/brand/secondary":"${secondary.hex}","color/palette/brand/secondary-hover":"#hex","color/palette/brand/secondary-subtle":"#hex","color/palette/brand/tertiary":"${tertiary.hex}","color/palette/brand/tertiary-hover":"#hex","color/palette/brand/tertiary-subtle":"#hex","color/palette/neutral/0":"#hex","color/palette/neutral/50":"#hex","color/palette/neutral/100":"#hex","color/palette/neutral/200":"#hex","color/palette/neutral/300":"#hex","color/palette/neutral/400":"#hex","color/palette/neutral/500":"#hex","color/palette/neutral/600":"#hex","color/palette/neutral/700":"#hex","color/palette/neutral/800":"#hex","color/palette/neutral/900":"#hex","color/palette/neutral/950":"#hex"},"light":{${SEM}},"dark":{${SEM}},"aliases":{"light":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"},"dark":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"}}}
+{"primitives":{"color/palette/brand/primary":"${primary.hex}","color/palette/brand/primary-hover":"#hex","color/palette/brand/primary-subtle":"#hex","color/palette/brand/secondary":"${secondary.hex}","color/palette/brand/secondary-hover":"#hex","color/palette/brand/secondary-subtle":"#hex","color/palette/brand/tertiary":"${tertiary.hex}","color/palette/brand/tertiary-hover":"#hex","color/palette/brand/tertiary-subtle":"#hex",${neutralJsonEntries}},"light":{${SEM}},"dark":{${SEM}},"aliases":{"light":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"},"dark":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"}}}
 Replace every "PRIM" with an exact primitive key from the valid keys list above.`;
 
     try {
@@ -222,6 +231,11 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
       const parsed = JSON.parse(text.replace(/```json|```/g, "").trim());
 
       if (!parsed.primitives || !parsed.light || !parsed.dark) throw new Error("Unexpected response structure from AI.");
+
+      // Always enforce the algorithmically-generated neutral scale (AI may drift)
+      Object.entries(neutralScale).forEach(([step, hex]) => {
+        parsed.primitives[`color/palette/neutral/${step}`] = hex;
+      });
 
       setTheme(parsed);
       setAiStatus("✓ Theme generated");
