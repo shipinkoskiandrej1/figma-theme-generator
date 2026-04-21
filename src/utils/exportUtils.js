@@ -1,51 +1,53 @@
 import { hexToRgbNorm } from "./colorUtils";
 
 // ─── Figma Console Script ─────────────────────────────────────────────────────
-// Creates two collections:
-//   • "Primitives"  — brand scale + neutral scale (1 mode: Values)
-//   • collectionName — semantic tokens (2 modes: Light, Dark)
+// Creates ONE "Colors" collection with Light and Dark modes.
+//   • Primitive palette tokens  — same hex value in both modes
+//   • Semantic tokens           — aliased to primitives via createVariableAlias()
+//     (fallback to resolved hex when alias key is missing/unknown)
 
-export function buildFigmaScript(theme, collectionName) {
+export function buildFigmaScript(theme, collectionName = "Colors") {
   if (!theme?.primitives) return "// No theme generated yet";
 
-  const { primitives, light, dark } = theme;
+  const { primitives, light, dark, aliases = {} } = theme;
+  const lightAliases = aliases.light || {};
+  const darkAliases  = aliases.dark  || {};
 
-  const hex2rgb = (hex) => {
-    const { r, g, b } = hexToRgbNorm(hex);
+  const fmt = (hex) => {
+    const { r, g, b } = hexToRgbNorm(hex || "#000000");
     return `{r:${r},g:${g},b:${b},a:1}`;
   };
 
-  // Primitive color lines
-  const primColorLines = Object.entries(primitives)
-    .filter(([k]) => k.startsWith("color/"))
-    .map(([k, v]) => `  setPrimColor(${JSON.stringify(k)}, ${hex2rgb(v)});`)
-    .join("\n");
+  // ── Inline data objects ──────────────────────────────────────────────────
+  const inlineObj = (obj) =>
+    "{\n" + Object.entries(obj).map(([k, v]) => `    ${JSON.stringify(k)}: ${JSON.stringify(v)}`).join(",\n") + "\n  }";
 
-  // Semantic lines helper
-  const semColorLines = (modeVar, obj) =>
-    Object.entries(obj)
-      .filter(([k]) => k.startsWith("color/"))
-      .map(([k, v]) => `  setSemColor(${modeVar}, ${JSON.stringify(k)}, ${hex2rgb(v)});`)
-      .join("\n");
+  const primColors   = Object.fromEntries(Object.entries(primitives).filter(([k]) => k.startsWith("color/")));
+  const lightColors  = Object.fromEntries(Object.entries(light).filter(([k]) => k.startsWith("color/")));
+  const darkColors   = Object.fromEntries(Object.entries(dark).filter(([k]) => k.startsWith("color/")));
+  const lightFonts   = Object.fromEntries(Object.entries(light).filter(([k]) => k.startsWith("font/")));
+  const darkFonts    = Object.fromEntries(Object.entries(dark).filter(([k]) => k.startsWith("font/")));
 
-  const semFontLines = (modeVar, obj) =>
-    Object.entries(obj)
-      .filter(([k]) => k.startsWith("font/"))
-      .map(([k, v]) => `  setSemString(${modeVar}, ${JSON.stringify(k)}, ${JSON.stringify(v)});`)
-      .join("\n");
+  const lightAliasColors = Object.fromEntries(Object.entries(lightAliases).filter(([k]) => k.startsWith("color/")));
+  const darkAliasColors  = Object.fromEntries(Object.entries(darkAliases).filter(([k]) => k.startsWith("color/")));
 
-  return `// ─── Figma Theme Import ───────────────────────────────────────
+  return `// ─── Figma Theme Import — Single Collection ──────────────────
 // Run in: Plugins → Development → Open Console
-// Creates: "Primitives" collection + "${collectionName}" semantic collection
+//
+// Creates: "Colors" collection with Light + Dark modes
+//   • Primitive tokens: same values in both modes
+//   • Semantic tokens: aliased to primitives (auto-resolve on mode switch)
 
 (function() {
-  const SEM_NAME = ${JSON.stringify(collectionName)};
 
   function hexToRgb(hex) {
-    const r = parseInt(hex.slice(1,3),16)/255;
-    const g = parseInt(hex.slice(3,5),16)/255;
-    const b = parseInt(hex.slice(5,7),16)/255;
-    return {r, g, b, a:1};
+    if (!hex || hex.length < 7) return {r:0,g:0,b:0,a:1};
+    return {
+      r: parseInt(hex.slice(1,3),16)/255,
+      g: parseInt(hex.slice(3,5),16)/255,
+      b: parseInt(hex.slice(5,7),16)/255,
+      a: 1,
+    };
   }
 
   function getOrCreateCol(name) {
@@ -53,57 +55,82 @@ export function buildFigmaScript(theme, collectionName) {
       || figma.variables.createVariableCollection(name);
   }
 
-  function setPrimColor(path, rgba) {
-    const col = primCol;
-    let v = figma.variables.getLocalVariables("COLOR")
-      .find(x => x.variableCollectionId === col.id && x.name === path);
-    if (!v) v = figma.variables.createVariable(path, col.id, "COLOR");
-    v.setValueForMode(primCol.defaultModeId, rgba);
+  function getOrCreateVar(col, name, type) {
+    return figma.variables.getLocalVariables(type)
+      .find(x => x.variableCollectionId === col.id && x.name === name)
+      || figma.variables.createVariable(name, col.id, type);
   }
 
-  function setSemColor(modeId, path, rgba) {
-    let v = figma.variables.getLocalVariables("COLOR")
-      .find(x => x.variableCollectionId === semCol.id && x.name === path);
-    if (!v) v = figma.variables.createVariable(path, semCol.id, "COLOR");
-    v.setValueForMode(modeId, rgba);
-  }
-
-  function setSemString(modeId, path, value) {
-    let v = figma.variables.getLocalVariables("STRING")
-      .find(x => x.variableCollectionId === semCol.id && x.name === path);
-    if (!v) v = figma.variables.createVariable(path, semCol.id, "STRING");
-    v.setValueForMode(modeId, value);
-  }
-
-  // ── 1. Primitives collection ──────────────────────────────
-  const primCol = getOrCreateCol("Primitives");
-
-${primColorLines}
-
-  // ── 2. Semantic collection (Light + Dark modes) ───────────
-  const semCol = getOrCreateCol(SEM_NAME);
+  // ── Collection + modes ────────────────────────────────────────────────────
+  const col = getOrCreateCol("Colors");
 
   let lightModeId, darkModeId;
-  if (semCol.modes.length === 1) {
-    semCol.renameMode(semCol.modes[0].modeId, "Light");
-    lightModeId = semCol.modes[0].modeId;
-    darkModeId  = semCol.addMode("Dark");
+  if (col.modes.length === 1) {
+    col.renameMode(col.modes[0].modeId, "Light");
+    lightModeId = col.modes[0].modeId;
+    darkModeId  = col.addMode("Dark");
   } else {
-    const lm = semCol.modes.find(m => m.name === "Light") || semCol.modes[0];
-    const dm = semCol.modes.find(m => m.name === "Dark")  || semCol.modes[1];
+    const lm = col.modes.find(m => m.name === "Light") || col.modes[0];
+    const dm = col.modes.find(m => m.name === "Dark")  || col.modes[1];
     lightModeId = lm.modeId;
     darkModeId  = dm.modeId;
   }
 
-  // Light mode
-${semColorLines("lightModeId", light)}
-${semFontLines("lightModeId", light)}
+  // ── 1. Primitive palette tokens ───────────────────────────────────────────
+  // Identical hex values in both Light and Dark modes
+  const PRIMITIVES = ${inlineObj(primColors)};
 
-  // Dark mode
-${semColorLines("darkModeId", dark)}
-${semFontLines("darkModeId", dark)}
+  const primVars = {};
+  for (const [name, hex] of Object.entries(PRIMITIVES)) {
+    const v   = getOrCreateVar(col, name, "COLOR");
+    const rgb = hexToRgb(hex);
+    v.setValueForMode(lightModeId, rgb);
+    v.setValueForMode(darkModeId,  rgb);
+    primVars[name] = v;
+  }
 
-  figma.notify('✅ Theme imported into "Primitives" + "${collectionName}" (Light / Dark)');
+  // ── 2. Semantic color tokens ──────────────────────────────────────────────
+  // Aliases resolve automatically when the user switches mode in Figma.
+  // Fallback hex values are used if an alias target is missing.
+
+  const LIGHT_ALIASES = ${inlineObj(lightAliasColors)};
+  const DARK_ALIASES  = ${inlineObj(darkAliasColors)};
+  const LIGHT_HEX     = ${inlineObj(lightColors)};
+  const DARK_HEX      = ${inlineObj(darkColors)};
+
+  for (const name of Object.keys(LIGHT_HEX)) {
+    const v = getOrCreateVar(col, name, "COLOR");
+
+    // Light mode
+    const la = LIGHT_ALIASES[name];
+    if (la && primVars[la]) {
+      v.setValueForMode(lightModeId, figma.variables.createVariableAlias(primVars[la]));
+    } else {
+      v.setValueForMode(lightModeId, hexToRgb(LIGHT_HEX[name] || "#000000"));
+    }
+
+    // Dark mode
+    const da = DARK_ALIASES[name];
+    if (da && primVars[da]) {
+      v.setValueForMode(darkModeId, figma.variables.createVariableAlias(primVars[da]));
+    } else {
+      v.setValueForMode(darkModeId, hexToRgb(DARK_HEX[name] || "#000000"));
+    }
+  }
+
+  // ── 3. Font string tokens ─────────────────────────────────────────────────
+  const FONTS_LIGHT = ${inlineObj(lightFonts)};
+  const FONTS_DARK  = ${inlineObj(darkFonts)};
+
+  for (const name of Object.keys(FONTS_LIGHT)) {
+    const v = getOrCreateVar(col, name, "STRING");
+    v.setValueForMode(lightModeId, FONTS_LIGHT[name] || "");
+    v.setValueForMode(darkModeId,  FONTS_DARK[name]  || FONTS_LIGHT[name] || "");
+  }
+
+  const primCount = Object.keys(PRIMITIVES).length;
+  const semCount  = Object.keys(LIGHT_HEX).length;
+  figma.notify(\`✅ "Colors" — \${primCount} primitives + \${semCount} semantic tokens — Light + Dark\`);
 })();`;
 }
 

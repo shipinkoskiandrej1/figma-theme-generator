@@ -176,8 +176,31 @@ DARK MODE rules (same token names, inverted for dark backgrounds):
 - link/hover: brighter than dark link/default
 - font families: SAME as light mode
 
-Return ONLY valid JSON. No markdown, no comments, no explanation. Every color value must be a valid 6-digit hex (#RRGGBB):
-{"primitives":{"color/palette/brand/primary":"${primary.hex}","color/palette/brand/primary-hover":"#hex","color/palette/brand/primary-subtle":"#hex","color/palette/brand/secondary":"${secondary.hex}","color/palette/brand/secondary-hover":"#hex","color/palette/brand/secondary-subtle":"#hex","color/palette/brand/tertiary":"${tertiary.hex}","color/palette/brand/tertiary-hover":"#hex","color/palette/brand/tertiary-subtle":"#hex","color/palette/neutral/0":"#hex","color/palette/neutral/50":"#hex","color/palette/neutral/100":"#hex","color/palette/neutral/200":"#hex","color/palette/neutral/300":"#hex","color/palette/neutral/400":"#hex","color/palette/neutral/500":"#hex","color/palette/neutral/600":"#hex","color/palette/neutral/700":"#hex","color/palette/neutral/800":"#hex","color/palette/neutral/900":"#hex","color/palette/neutral/950":"#hex"},"light":{${SEM}},"dark":{${SEM}}}`;
+ALIASES section — which primitive palette token each semantic token maps to:
+Every alias value must be an EXACT key from the primitives object. Valid keys:
+  Neutral: color/palette/neutral/0, /50, /100, /200, /300, /400, /500, /600, /700, /800, /900, /950
+  Brand:   color/palette/brand/primary, /primary-hover, /primary-subtle, /secondary, /secondary-hover, /secondary-subtle, /tertiary, /tertiary-hover, /tertiary-subtle
+
+Light mode alias guidance (neutral/0 = lightest, neutral/950 = darkest):
+  bg/* → neutral/0–100 range  |  bg/inverse → neutral/900–950
+  text/primary → neutral/900–950  |  text/secondary → neutral/600–700  |  text/muted → neutral/400–500  |  text/disabled → neutral/300
+  text/on-brand → neutral/0  |  text/accent → a brand variant
+  border/default → neutral/200  |  border/subtle → neutral/100  |  border/strong → neutral/300  |  border/focus → brand/primary
+  action/primary/* → brand/primary, brand/primary-hover, brand/primary-subtle, neutral/0 (text)
+  action/secondary/* → brand/secondary, brand/secondary-hover, brand/secondary-subtle, neutral/0 (text)
+  link/* → a brand variant
+
+Dark mode alias guidance (inverted — neutral/950 = darkest bg):
+  bg/base → neutral/950  |  bg/surface → neutral/900  |  bg/elevated → neutral/800  |  bg/overlay → neutral/700  |  bg/inverse → neutral/0–50
+  text/primary → neutral/0–50  |  text/secondary → neutral/300–400  |  text/muted → neutral/500  |  text/disabled → neutral/700
+  text/on-brand → neutral/0  |  text/accent → a brand variant
+  border/default → neutral/800  |  border/subtle → neutral/900  |  border/strong → neutral/700  |  border/focus → brand/primary
+  action/* → same brand aliases as light mode (brand colors work on both bg)
+  link/* → a brand variant
+
+Return ONLY valid JSON. No markdown, no comments, no explanation. Every color value must be a valid 6-digit hex (#RRGGBB). Every alias value must be an exact primitive key:
+{"primitives":{"color/palette/brand/primary":"${primary.hex}","color/palette/brand/primary-hover":"#hex","color/palette/brand/primary-subtle":"#hex","color/palette/brand/secondary":"${secondary.hex}","color/palette/brand/secondary-hover":"#hex","color/palette/brand/secondary-subtle":"#hex","color/palette/brand/tertiary":"${tertiary.hex}","color/palette/brand/tertiary-hover":"#hex","color/palette/brand/tertiary-subtle":"#hex","color/palette/neutral/0":"#hex","color/palette/neutral/50":"#hex","color/palette/neutral/100":"#hex","color/palette/neutral/200":"#hex","color/palette/neutral/300":"#hex","color/palette/neutral/400":"#hex","color/palette/neutral/500":"#hex","color/palette/neutral/600":"#hex","color/palette/neutral/700":"#hex","color/palette/neutral/800":"#hex","color/palette/neutral/900":"#hex","color/palette/neutral/950":"#hex"},"light":{${SEM}},"dark":{${SEM}},"aliases":{"light":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"},"dark":{"color/bg/base":"PRIM","color/bg/surface":"PRIM","color/bg/elevated":"PRIM","color/bg/overlay":"PRIM","color/bg/inverse":"PRIM","color/text/primary":"PRIM","color/text/secondary":"PRIM","color/text/muted":"PRIM","color/text/disabled":"PRIM","color/text/on-brand":"PRIM","color/text/accent":"PRIM","color/border/default":"PRIM","color/border/subtle":"PRIM","color/border/strong":"PRIM","color/border/focus":"color/palette/brand/primary","color/action/primary/bg":"color/palette/brand/primary","color/action/primary/bg-hover":"color/palette/brand/primary-hover","color/action/primary/bg-subtle":"color/palette/brand/primary-subtle","color/action/primary/text":"PRIM","color/action/secondary/bg":"color/palette/brand/secondary","color/action/secondary/bg-hover":"color/palette/brand/secondary-hover","color/action/secondary/bg-subtle":"color/palette/brand/secondary-subtle","color/action/secondary/text":"PRIM","color/link/default":"PRIM","color/link/hover":"PRIM"}}}
+Replace every "PRIM" with an exact primitive key from the valid keys list above.`;
 
     try {
       const res = await fetch("https://api.openai.com/v1/chat/completions", {
@@ -185,9 +208,9 @@ Return ONLY valid JSON. No markdown, no comments, no explanation. Every color va
         headers: { "Content-Type": "application/json", "Authorization": `Bearer ${apiKey}` },
         body: JSON.stringify({
           model: "gpt-4o",
-          max_tokens: 2500,
+          max_tokens: 3000,
           messages: [
-            { role: "system", content: "You are a design systems expert. Output only valid JSON with 6-digit hex color values. No markdown, no comments." },
+            { role: "system", content: "You are a design systems expert. Output only valid JSON. Color values must be 6-digit hex. Alias values must be exact primitive token keys. No markdown, no comments." },
             { role: "user", content: prompt },
           ],
         }),
