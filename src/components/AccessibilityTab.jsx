@@ -86,7 +86,7 @@ function SuggestedFix({ alt, bgHex, onApply }) {
   );
 }
 
-export default function AccessibilityTab({ theme, loading, activeMode, onModeChange, onApplyFix }) {
+export default function AccessibilityTab({ theme, loading, activeMode, onModeChange, onApplyFix, isMobile, isTablet }) {
   if (!theme) return null;
 
   const pairs = WCAG_PAIRS.filter(p => theme[p.fg] && theme[p.bg]).map(p => {
@@ -103,7 +103,7 @@ export default function AccessibilityTab({ theme, loading, activeMode, onModeCha
   const total   = pairs.length;
 
   return (
-    <div style={{ padding: '36px 36px 80px', display: 'flex', flexDirection: 'column', gap: 36 }}>
+    <div style={{ padding: isMobile ? '24px 16px 80px' : '36px 36px 80px', display: 'flex', flexDirection: 'column', gap: 36 }}>
 
       {/* Header + mode toggle */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -117,7 +117,7 @@ export default function AccessibilityTab({ theme, loading, activeMode, onModeCha
       </div>
 
       {/* Summary stats */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? 'repeat(2, 1fr)' : 'repeat(4, 1fr)', gap: 16 }}>
         {[
           ['Total Pairs',  total,          C.t1,      C.bg1,     C.b2],
           ['AA Pass',      passAA,         '#059669', '#F0FDF4', '#BBF7D0'],
@@ -136,7 +136,7 @@ export default function AccessibilityTab({ theme, loading, activeMode, onModeCha
       </div>
 
       {/* Standard explainers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 16 }}>
+      <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : '1fr 1fr', gap: 16 }}>
         {[
           ['AA — Minimum Standard', '4.5:1', 'Required for normal text. 3:1 for large text (18pt+ or 14pt bold). Required by most accessibility laws (ADA, AODA, EN 301 549).', '#059669'],
           ['AAA — Enhanced Standard', '7:1', 'Highest contrast level. Required for users with low vision. Recommended for body text in enterprise and government applications.', '#7C3AED'],
@@ -160,11 +160,11 @@ export default function AccessibilityTab({ theme, loading, activeMode, onModeCha
         </div>
 
         {loading ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 20 }}>
             {[1,2,3,4,5,6].map(i => <Skeleton key={i} h={200} />)}
           </div>
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: isMobile ? '1fr' : isTablet ? 'repeat(2,1fr)' : 'repeat(3,1fr)', gap: 20 }}>
             {pairs.map(({ label, fg, fgHex, bgHex, ratio, aa, aaa, alt }) => (
               <div key={label} style={{ border: `1px solid ${C.b2}`, borderRadius: 6, background: C.bg1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
                 {/* Preview */}

@@ -67,6 +67,7 @@ export default function Sidebar({
   fonts, onFontsChange,
   loading, onGenerate, onSave,
   aiStatus,
+  isMobile, onClose,
 }) {
   const inputBase = {
     width: '100%', padding: '0 10px', height: 34,
@@ -130,6 +131,7 @@ export default function Sidebar({
                   if (!clickable) return;
                   onTabChange(id);
                   if (view !== 'generator') onViewChange('generator');
+                  if (isMobile) onClose?.();
                 }}
                 onMouseEnter={e => { if (!active && clickable) e.currentTarget.style.background = C.bg3; }}
                 onMouseLeave={e => { if (!active) e.currentTarget.style.background = 'transparent'; }}
@@ -279,7 +281,7 @@ export default function Sidebar({
 
         {/* Dashboard nav */}
         <div
-          onClick={() => onViewChange(view === 'dashboard' ? 'generator' : 'dashboard')}
+          onClick={() => { onViewChange(view === 'dashboard' ? 'generator' : 'dashboard'); if (isMobile) onClose?.(); }}
           onMouseEnter={e => { if (view !== 'dashboard') e.currentTarget.style.background = C.bg3; }}
           onMouseLeave={e => { if (view !== 'dashboard') e.currentTarget.style.background = 'transparent'; }}
           style={{

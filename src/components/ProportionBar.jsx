@@ -1,6 +1,6 @@
 import { C } from "../utils/theme";
 
-export default function ProportionBar({ primary, secondary, tertiary }) {
+export default function ProportionBar({ primary, secondary, tertiary, isMobile }) {
   const segments = [[primary, 60], [secondary, 30], [tertiary, 10]];
 
   return (
@@ -21,7 +21,7 @@ export default function ProportionBar({ primary, secondary, tertiary }) {
       </div>
 
       {/* Stat cells */}
-      <div style={{ display: 'flex', gap: 0, border: `1px solid ${C.b2}`, borderRadius: 3, overflow: 'hidden' }}>
+      <div style={{ display: 'flex', flexWrap: isMobile ? 'wrap' : 'nowrap', gap: 0, border: `1px solid ${C.b2}`, borderRadius: 3, overflow: 'hidden' }}>
         {[['Primary', '60%', primary], ['Secondary', '30%', secondary], ['Tertiary', '10%', tertiary]].map(([label, pct, color], i) => (
           <div key={label} style={{
             flex: 1, padding: '10px 12px',

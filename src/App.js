@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
+import { useWindowSize } from "./hooks/useWindowSize";
 import Sidebar from "./components/Sidebar";
 import ProportionBar from "./components/ProportionBar";
 import VariableTable from "./components/VariableTable";
@@ -42,6 +43,12 @@ function ModeToggle({ activeMode, onModeChange }) {
 }
 
 export default function App() {
+  // Responsive
+  const { width } = useWindowSize();
+  const isMobile  = width < 768;
+  const isTablet  = width < 1080;
+  const [sidebarOpen, setSidebarOpen] = useState(false);
+
   // Layout
   const [view, setView]           = useState("generator");
   const [activeTab, setActiveTab] = useState("Variables");
@@ -297,6 +304,8 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
 
   // ── Tab content ───────────────────────────────────────────────────────────
   const renderTab = () => {
+    const contentPadding = isMobile ? '24px 16px 80px' : '32px 36px 80px';
+
     if (!theme) return (
       <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 16, padding: 48 }}>
         <div style={{ width: 56, height: 56, borderRadius: 14, background: C.bg1, border: `1px solid ${C.b2}`, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>⟡</div>
@@ -308,12 +317,12 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
     );
 
     if (activeTab === "Variables") return (
-      <div style={{ display: 'flex', gap: 28, padding: '32px 36px 80px', alignItems: 'flex-start' }}>
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
+      <div style={{ display: 'flex', flexDirection: isMobile ? 'column' : 'row', gap: 28, padding: contentPadding, alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20, width: isMobile ? '100%' : undefined }}>
           {saveError && <span style={{ fontSize: 11, color: '#EF4444', fontFamily: C.sans }}>{saveError}</span>}
-          <VariableTable theme={activeFlatTheme} activeMode={activeMode} onEdit={updateThemeToken} />
+          <VariableTable theme={activeFlatTheme} activeMode={activeMode} onEdit={updateThemeToken} isMobile={isMobile} />
         </div>
-        <div style={{ width: 320, flexShrink: 0 }}>
+        <div style={{ width: isMobile ? '100%' : 320, flexShrink: 0 }}>
           <WcagChecker theme={activeFlatTheme} onViewFull={() => setActiveTab('Accessibility')} />
         </div>
       </div>
@@ -326,17 +335,19 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
         activeMode={activeMode}
         onModeChange={setActiveMode}
         onApplyFix={updateThemeToken}
+        isMobile={isMobile}
+        isTablet={isTablet}
       />
     );
 
     if (activeTab === "Preview") return (
-      <div style={{ padding: '32px 36px 80px' }}>
+      <div style={{ padding: contentPadding }}>
         <LivePreview theme={activeFlatTheme} />
       </div>
     );
 
     if (activeTab === "Export") return (
-      <div style={{ padding: '32px 36px 80px', maxWidth: 800 }}>
+      <div style={{ padding: contentPadding, maxWidth: 800 }}>
         <FigmaExport theme={theme} collectionName={collectionName} onCollectionNameChange={setCollectionName} />
       </div>
     );
@@ -364,35 +375,68 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
   return (
     <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.bg0, fontFamily: C.sans }}>
 
+      {/* ── Mobile backdrop ── */}
+      {isMobile && sidebarOpen && (
+        <div
+          onClick={() => setSidebarOpen(false)}
+          style={{
+            position: 'fixed', inset: 0,
+            background: 'rgba(0,0,0,0.4)',
+            zIndex: 299,
+          }}
+        />
+      )}
+
       {/* ── Sidebar ── */}
-      <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
-        generated={!!theme}
-        view={view}
-        onViewChange={setView}
-        colors={colors}
-        onColorChange={updateColor}
-        mood={mood}
-        onMoodChange={setMood}
-        fonts={fonts}
-        onFontsChange={setFonts}
-        loading={loading}
-        onGenerate={generate}
-        onSave={() => { setSaveError(null); setShowSaveModal(true); }}
-        aiStatus={aiStatus}
-      />
+      <div style={isMobile ? {
+        position: 'fixed', left: 0, top: 0, zIndex: 300,
+        transform: sidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        transition: 'transform .25s',
+        height: '100vh',
+      } : {}}>
+        <Sidebar
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          generated={!!theme}
+          view={view}
+          onViewChange={setView}
+          colors={colors}
+          onColorChange={updateColor}
+          mood={mood}
+          onMoodChange={setMood}
+          fonts={fonts}
+          onFontsChange={setFonts}
+          loading={loading}
+          onGenerate={generate}
+          onSave={() => { setSaveError(null); setShowSaveModal(true); }}
+          aiStatus={aiStatus}
+          isMobile={isMobile}
+          onClose={() => setSidebarOpen(false)}
+        />
+      </div>
 
       {/* ── Main content ── */}
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
         {/* Breadcrumb + page header */}
         <div style={{
-          padding: '0 36px', borderBottom: `1px solid ${C.b2}`,
+          padding: isMobile ? '0 16px' : '0 36px', borderBottom: `1px solid ${C.b2}`,
           background: C.bg1, flexShrink: 0,
         }}>
           {/* Breadcrumb row */}
           <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 18, paddingBottom: 6 }}>
+            {isMobile && (
+              <button
+                onClick={() => setSidebarOpen(v => !v)}
+                style={{
+                  background: 'none', border: 'none', cursor: 'pointer',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  padding: 4, marginRight: 4, color: C.t2,
+                }}
+              >
+                {sidebarOpen ? <X size={18} strokeWidth={2} /> : <Menu size={18} strokeWidth={2} />}
+              </button>
+            )}
             <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>Theme Generator</span>
             <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>/</span>
             <span style={{ fontSize: 11, color: C.t3, fontFamily: C.sans, fontWeight: 500 }}>{pageTitle}</span>
@@ -458,11 +502,12 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
 
             {/* Collapsible body */}
             {showPropBar && (
-              <div style={{ padding: '16px 36px 18px' }}>
+              <div style={{ padding: isMobile ? '16px 16px 18px' : '16px 36px 18px' }}>
                 <ProportionBar
                   primary={colors.primary.hex}
                   secondary={colors.secondary.hex}
                   tertiary={colors.tertiary.hex}
+                  isMobile={isMobile}
                 />
               </div>
             )}
@@ -474,7 +519,7 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
         {/* Scrollable content */}
         <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', background: C.bg0 }}>
           {view === 'dashboard'
-            ? <Dashboard onLoadTheme={handleLoadTheme} />
+            ? <Dashboard onLoadTheme={handleLoadTheme} isMobile={isMobile} />
             : renderTab()
           }
         </div>
@@ -485,7 +530,7 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
       )}
 
       {/* ── Attribution badge ── */}
-      <div style={{
+      {!isMobile && <div style={{
         position: 'fixed', bottom: 18, right: 22, zIndex: 999,
         padding: '7px 14px',
         background: 'rgba(12,18,33,0.88)',
@@ -505,7 +550,7 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
         <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)', fontFamily: C.sans }}>
           © 2026
         </span>
-      </div>
+      </div>}
     </div>
   );
 }

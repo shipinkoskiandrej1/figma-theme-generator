@@ -33,7 +33,7 @@ function fallback(text, cb) {
   document.body.removeChild(ta);
 }
 
-function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdit, onEditValChange, copied, onCopy, colorRefs }) {
+function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdit, onEditValChange, copied, onCopy, colorRefs, isMobile }) {
   const Icon = GROUP_ICONS[group.name] || Palette;
 
   return (
@@ -66,7 +66,7 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
             onMouseEnter={e => { if (!isFixed) e.currentTarget.style.background = C.bg3; }}
             onMouseLeave={e => e.currentTarget.style.background = i % 2 ? C.bg2 : C.bg1}
             style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '12px 22px',
+              display: 'flex', alignItems: 'center', gap: 12, padding: isMobile ? '11px 14px' : '12px 22px',
               background: i % 2 ? C.bg2 : C.bg1,
               borderBottom: `1px solid ${C.b1}`, transition: 'background .1s',
               opacity: isFixed ? 0.65 : 1,
@@ -104,7 +104,7 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
 
             {/* Token name */}
             <span style={{
-              flex: 1, fontFamily: C.mono, fontSize: 11, color: C.t3,
+              flex: 1, fontFamily: C.mono, fontSize: isMobile ? 10 : 11, color: C.t3,
               letterSpacing: '.01em', whiteSpace: 'nowrap',
               overflow: 'hidden', textOverflow: 'ellipsis',
             }}>
@@ -207,7 +207,7 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
   );
 }
 
-export default function VariableTable({ theme, activeMode, onEdit }) {
+export default function VariableTable({ theme, activeMode, onEdit, isMobile }) {
   const [editing, setEditing]   = useState(null);
   const [editVal, setEditVal]   = useState('');
   const [copied, setCopied]     = useState(null);
@@ -234,7 +234,7 @@ export default function VariableTable({ theme, activeMode, onEdit }) {
     copyToClipboard(val, () => { setCopied(key); setTimeout(() => setCopied(null), 1500); });
   };
 
-  const sharedProps = { editing, editVal, onStartEdit: startEdit, onCommitEdit: commitEdit, onEditValChange: setEditVal, copied, onCopy: copyVal, colorRefs };
+  const sharedProps = { editing, editVal, onStartEdit: startEdit, onCommitEdit: commitEdit, onEditValChange: setEditVal, copied, onCopy: copyVal, colorRefs, isMobile };
 
   return (
     <div style={{ borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.b2}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>

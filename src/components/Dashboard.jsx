@@ -16,7 +16,7 @@ function Skeleton() {
   );
 }
 
-function ClientCard({ client, onLoad, onDelete }) {
+function ClientCard({ client, onLoad, onDelete, isMobile }) {
   const [deleting, setDeleting] = useState(false);
   const [hovered, setHovered] = useState(false);
 
@@ -65,9 +65,11 @@ function ClientCard({ client, onLoad, onDelete }) {
         </div>
       </div>
 
-      <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans, marginRight: 6, flexShrink: 0 }}>
-        Click to load
-      </span>
+      {!isMobile && (
+        <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans, marginRight: 6, flexShrink: 0 }}>
+          Click to load
+        </span>
+      )}
 
       {/* Delete */}
       <button
@@ -90,7 +92,7 @@ function ClientCard({ client, onLoad, onDelete }) {
   );
 }
 
-export default function Dashboard({ onLoadTheme }) {
+export default function Dashboard({ onLoadTheme, isMobile }) {
   const [clients, setClients] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -116,7 +118,7 @@ export default function Dashboard({ onLoadTheme }) {
   };
 
   return (
-    <div style={{ padding: '36px 48px 80px', display: 'flex', flexDirection: 'column', gap: 20 }}>
+    <div style={{ padding: isMobile ? '24px 16px 80px' : '36px 48px 80px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -175,6 +177,7 @@ export default function Dashboard({ onLoadTheme }) {
               client={client}
               onLoad={onLoadTheme}
               onDelete={handleDelete}
+              isMobile={isMobile}
             />
           ))}
         </div>
