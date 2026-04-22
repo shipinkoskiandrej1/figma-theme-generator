@@ -60,7 +60,7 @@ export default function App() {
   const [aiStatus, setAiStatus] = useState(null);
 
   // UI toggles
-  const [showPropBar, setShowPropBar] = useState(true);
+  const [showPropBar, setShowPropBar] = useState(false);
 
   // Save
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -437,12 +437,23 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
               <span style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>
                 60 / 30 / 10 Rule
               </span>
-              <ChevronDown
-                size={13}
-                strokeWidth={2}
-                color={C.t4}
-                style={{ transition: 'transform .2s', transform: showPropBar ? 'rotate(0deg)' : 'rotate(-90deg)' }}
-              />
+              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+                <span style={{ fontSize: 11, fontWeight: 500, color: C.t3, fontFamily: C.sans }}>
+                  {showPropBar ? 'Hide' : 'Show'}
+                </span>
+                <div style={{
+                  width: 22, height: 22, borderRadius: 5,
+                  background: C.bg3, border: `1px solid ${C.b3}`,
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <ChevronDown
+                    size={14}
+                    strokeWidth={2.5}
+                    color={C.t2}
+                    style={{ transition: 'transform .2s', transform: showPropBar ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+                  />
+                </div>
+              </div>
             </button>
 
             {/* Collapsible body */}
