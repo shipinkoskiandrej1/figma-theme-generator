@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { ChevronDown } from "lucide-react";
 import Sidebar from "./components/Sidebar";
 import ProportionBar from "./components/ProportionBar";
 import VariableTable from "./components/VariableTable";
@@ -57,6 +58,9 @@ export default function App() {
   const [theme, setTheme]       = useState(null);
   const [error, setError]       = useState(null);
   const [aiStatus, setAiStatus] = useState(null);
+
+  // UI toggles
+  const [showPropBar, setShowPropBar] = useState(true);
 
   // Save
   const [showSaveModal, setShowSaveModal] = useState(false);
@@ -418,12 +422,39 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
 
         {/* Proportion bar */}
         {theme && view === 'generator' && (
-          <div style={{ padding: '14px 36px', borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0 }}>
-            <ProportionBar
-              primary={colors.primary.hex}
-              secondary={colors.secondary.hex}
-              tertiary={colors.tertiary.hex}
-            />
+          <div style={{ borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0 }}>
+            {/* Toggle header */}
+            <button
+              onClick={() => setShowPropBar(v => !v)}
+              style={{
+                width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+                padding: '10px 36px', background: 'none', border: 'none', cursor: 'pointer',
+                borderBottom: showPropBar ? `1px solid ${C.b2}` : 'none',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = C.bg2}
+              onMouseLeave={e => e.currentTarget.style.background = 'none'}
+            >
+              <span style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>
+                60 / 30 / 10 Rule
+              </span>
+              <ChevronDown
+                size={13}
+                strokeWidth={2}
+                color={C.t4}
+                style={{ transition: 'transform .2s', transform: showPropBar ? 'rotate(0deg)' : 'rotate(-90deg)' }}
+              />
+            </button>
+
+            {/* Collapsible body */}
+            {showPropBar && (
+              <div style={{ padding: '16px 36px 18px' }}>
+                <ProportionBar
+                  primary={colors.primary.hex}
+                  secondary={colors.secondary.hex}
+                  tertiary={colors.tertiary.hex}
+                />
+              </div>
+            )}
           </div>
         )}
 
