@@ -1,4 +1,3 @@
-import { hexToRgbNorm } from "./colorUtils";
 
 // ─── Figma Console Script ─────────────────────────────────────────────────────
 // Creates ONE "Colors" collection with Light and Dark modes.
@@ -12,11 +11,6 @@ export function buildFigmaScript(theme, collectionName = "Colors") {
   const { primitives, light, dark, aliases = {} } = theme;
   const lightAliases = aliases.light || {};
   const darkAliases  = aliases.dark  || {};
-
-  const fmt = (hex) => {
-    const { r, g, b } = hexToRgbNorm(hex || "#000000");
-    return `{r:${r},g:${g},b:${b},a:1}`;
-  };
 
   // ── Inline data objects ──────────────────────────────────────────────────
   const inlineObj = (obj) =>

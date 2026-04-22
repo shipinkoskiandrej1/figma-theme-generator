@@ -8,7 +8,7 @@ function alpha(hex, a) {
   return `rgba(${r},${g},${b},${a})`;
 }
 
-export default function LivePreview({ theme, companyName, companyLogo }) {
+export default function LivePreview({ theme }) {
   if (!theme) return null;
 
   const bg      = theme["color/bg/base"]              || '#FAFAFA';
@@ -18,7 +18,6 @@ export default function LivePreview({ theme, companyName, companyLogo }) {
   const body    = theme["color/text/secondary"]       || '#71717A';
   const brand   = theme["color/action/primary/bg"]    || '#5292CE';
   const onBrand = theme["color/action/primary/text"]  || '#FFFFFF';
-  const subtle  = theme["color/action/primary/bg-subtle"] || alpha(brand, .12);
   const sec     = theme["color/action/secondary/bg"]  || theme["color/palette/brand/secondary"] || brand;
   const link    = theme["color/link/default"]         || brand;
 
@@ -32,8 +31,7 @@ export default function LivePreview({ theme, companyName, companyLogo }) {
         {/* Nav */}
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 36 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {companyLogo && <img src={companyLogo} alt="" style={{ width: 22, height: 22, borderRadius: 4, objectFit: 'cover' }} />}
-            <span style={{ fontFamily: display, fontSize: 13, fontWeight: 700, color: h }}>{companyName || 'Acme'}</span>
+            <span style={{ fontFamily: display, fontSize: 13, fontWeight: 700, color: h }}>Acme</span>
           </div>
           <div style={{ display: 'flex', gap: 24 }}>
             {['Product', 'Pricing', 'Docs'].map(l => (
