@@ -483,6 +483,29 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
       {showSaveModal && (
         <SaveModal onSave={handleSave} onCancel={() => setShowSaveModal(false)} saving={saving} />
       )}
+
+      {/* ── Attribution badge ── */}
+      <div style={{
+        position: 'fixed', bottom: 18, right: 22, zIndex: 999,
+        padding: '7px 14px',
+        background: 'rgba(12,18,33,0.88)',
+        backdropFilter: 'blur(8px)',
+        borderRadius: 20,
+        border: '1px solid rgba(255,255,255,0.08)',
+        boxShadow: '0 4px 16px rgba(0,0,0,0.18)',
+        display: 'flex', alignItems: 'center', gap: 6,
+        pointerEvents: 'none',
+      }}>
+        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.45)', fontFamily: C.sans, letterSpacing: '.01em' }}>
+          Designed &amp; developed by
+        </span>
+        <span style={{ fontSize: 10.5, fontWeight: 700, color: 'rgba(255,255,255,0.85)', fontFamily: C.sans, letterSpacing: '.04em' }}>
+          ANTIBE
+        </span>
+        <span style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.3)', fontFamily: C.sans }}>
+          © 2026
+        </span>
+      </div>
     </div>
   );
 }
