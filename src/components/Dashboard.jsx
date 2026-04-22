@@ -10,7 +10,7 @@ function formatDate(iso) {
 function Skeleton() {
   return (
     <div style={{
-      height: 72, borderRadius: 8, background: C.bg3,
+      height: 88, borderRadius: 10, background: C.bg3,
       animation: 'pulse 1.4s ease-in-out infinite',
     }} />
   );
@@ -37,17 +37,17 @@ function ClientCard({ client, onLoad, onDelete }) {
       onMouseEnter={() => setHovered(true)}
       onMouseLeave={() => setHovered(false)}
       style={{
-        display: 'flex', alignItems: 'center', gap: 14,
-        padding: '16px 20px',
+        display: 'flex', alignItems: 'center', gap: 20,
+        padding: '20px 28px',
         background: hovered ? C.bg2 : C.bg1,
         border: `1px solid ${hovered ? C.b3 : C.b2}`,
-        borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
-        boxShadow: hovered ? '0 2px 8px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
+        borderRadius: 10, cursor: 'pointer', transition: 'all .15s',
+        boxShadow: hovered ? '0 4px 16px rgba(0,0,0,0.09)' : '0 1px 4px rgba(0,0,0,0.05)',
       }}
     >
       {/* Swatch strip */}
       <div style={{
-        width: 80, height: 32, borderRadius: 6, overflow: 'hidden',
+        width: 120, height: 44, borderRadius: 8, overflow: 'hidden',
         border: `1px solid ${C.b2}`, display: 'flex', flexShrink: 0,
       }}>
         {colors.map((c, i) => (
@@ -57,15 +57,15 @@ function ClientCard({ client, onLoad, onDelete }) {
 
       {/* Info */}
       <div style={{ flex: 1, minWidth: 0 }}>
-        <div style={{ fontSize: 12, fontWeight: 600, color: C.t1, fontFamily: C.sans, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+        <div style={{ fontSize: 14, fontWeight: 600, color: C.t1, fontFamily: C.sans, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
           {client.client_name}
         </div>
-        <div style={{ fontSize: 10, color: C.t4, fontFamily: C.sans, marginTop: 2 }}>
+        <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans, marginTop: 4 }}>
           {formatDate(client.created_at)}
         </div>
       </div>
 
-      <span style={{ fontSize: 10, color: C.t5, fontFamily: C.sans, marginRight: 4, flexShrink: 0 }}>
+      <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans, marginRight: 6, flexShrink: 0 }}>
         Click to load
       </span>
 
@@ -74,8 +74,8 @@ function ClientCard({ client, onLoad, onDelete }) {
         onClick={handleDelete}
         disabled={deleting}
         style={{
-          width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: `1px solid ${C.b3}`, borderRadius: 6,
+          width: 34, height: 34, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: `1px solid ${C.b3}`, borderRadius: 7,
           color: C.t4, cursor: deleting ? 'not-allowed' : 'pointer',
           opacity: deleting ? 0.4 : 1, transition: 'all .15s', flexShrink: 0,
         }}
@@ -116,15 +116,15 @@ export default function Dashboard({ onLoadTheme }) {
   };
 
   return (
-    <div style={{ maxWidth: 720, margin: '0 auto', padding: '36px 36px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ padding: '36px 48px 80px', display: 'flex', flexDirection: 'column', gap: 20 }}>
 
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         <div>
-          <div style={{ fontSize: 10, fontWeight: 600, color: C.t4, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+          <div style={{ fontSize: 11, fontWeight: 700, color: C.t3, letterSpacing: '.08em', textTransform: 'uppercase', fontFamily: C.sans }}>
             Saved Clients
           </div>
-          <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans, marginTop: 3 }}>
+          <div style={{ fontSize: 12, color: C.t4, fontFamily: C.sans, marginTop: 4 }}>
             {!loading && !error && `${clients.length} theme${clients.length !== 1 ? 's' : ''} saved`}
           </div>
         </div>
@@ -145,7 +145,7 @@ export default function Dashboard({ onLoadTheme }) {
 
       {/* Content */}
       {loading ? (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {[1, 2, 3].map(i => <Skeleton key={i} />)}
         </div>
       ) : error ? (
@@ -168,7 +168,7 @@ export default function Dashboard({ onLoadTheme }) {
           </div>
         </div>
       ) : (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
           {clients.map(client => (
             <ClientCard
               key={client.id}
