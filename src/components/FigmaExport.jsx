@@ -48,7 +48,7 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
           ['Figma Console Script', script, 'Plugins → Development → Open Console — creates "Primitives" + semantic collections with Light / Dark modes'],
           ['Token Studio JSON', json, 'Token Studio → New token set → Load from JSON — includes global, light, and dark sets'],
         ].map(([title, code, hint]) => (
-          <div key={title} style={{ padding: 18, background: C.bg2, border: `1px solid ${C.b2}`, borderRadius: 6, display: 'flex', flexDirection: 'column', gap: 12 }}>
+          <div key={title} style={{ padding: 22, background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)', display: 'flex', flexDirection: 'column', gap: 12 }}>
             <div>
               <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 4, fontFamily: C.sans }}>{title}</div>
               <div style={{ fontSize: 10, color: C.t4, lineHeight: 1.6, fontFamily: C.sans }}>{hint}</div>
@@ -63,9 +63,11 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
             <button
               onClick={() => copy(title, code)}
               style={{
-                padding: '8px', background: 'transparent', fontWeight: 500, fontFamily: C.sans,
-                border: `1px solid ${copied === title ? '#10B98160' : C.b3}`, borderRadius: 4,
-                color: copied === title ? '#10B981' : C.t2, fontSize: 12, transition: 'all .2s', cursor: 'pointer',
+                padding: '9px', fontWeight: 500, fontFamily: C.sans,
+                border: 'none', borderRadius: 6, cursor: 'pointer', transition: 'all .2s',
+                background: copied === title ? '#F0FDF4' : C.t1,
+                color: copied === title ? '#10B981' : '#fff',
+                fontSize: 12,
               }}
             >
               {copied === title ? '✓ Copied!' : 'Copy'}
@@ -77,7 +79,7 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
       {/* Instructions toggle */}
       <button
         onClick={() => setShowInstructions(v => !v)}
-        style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 11, color: C.t4, fontFamily: C.sans }}
+        style={{ display: 'flex', alignItems: 'center', gap: 5, background: 'none', border: 'none', cursor: 'pointer', padding: 0, fontSize: 11, color: C.t3, fontFamily: C.sans }}
       >
         {showInstructions ? <ChevronUp size={11} /> : <ChevronDown size={11} />}
         How to use these exports
@@ -107,7 +109,7 @@ export default function FigmaExport({ theme, collectionName, onCollectionNameCha
               ]
             },
           ].map((block, i) => (
-            <div key={i} style={{ background: C.bg3, borderRadius: 5, padding: '12px 16px' }}>
+            <div key={i} style={{ background: C.bg3, borderRadius: 8, padding: '12px 16px' }}>
               <div style={{ fontSize: 12, fontWeight: 600, color: C.t2, marginBottom: 8, fontFamily: C.sans }}>{block.label}</div>
               {block.steps.map((s, j) => (
                 <div key={j} style={{ display: 'flex', gap: 8, marginBottom: 5 }}>

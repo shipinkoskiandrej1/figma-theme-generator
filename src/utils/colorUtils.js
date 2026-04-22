@@ -71,34 +71,105 @@ function hslToHex(h, s, l) {
 }
 
 /**
- * Generates a 12-stop neutral scale tinted with the primary brand hue.
- * Saturation is fixed at 8% — subtle enough to read as neutral,
- * strong enough to create visual harmony with the brand palette.
+ * Generates a 12-stop neutral scale anchored to the primary brand color.
+ *
+ * Design intent:
+ *  • Light end (0, 50)  — near-white with a barely-there brand tint (~4% mix)
+ *  • Mid range (400–600) — clearly blue/green/red-gray depending on brand hue
+ *  • Dark end (900, 950) — the darkest shade of the primary color, NOT black
+ *
+ * Technique: RGB interpolation between a near-white anchor and a near-black
+ * anchor, where the brand mix ratio grows linearly from 4% → 30% as the
+ * scale deepens. This guarantees visible hue influence at every stop and
+ * ensures neutral/950 is an unmistakably dark version of the brand color.
+ *
+ * Why not HSL: HSL collapses chroma to zero at extreme lightness via
+ * `a = s × min(L, 1−L)` — at L=0.975 the effective chroma is 0.002,
+ * producing pure white regardless of saturation input.
  *
  * @param {string} primaryHex – 6-digit hex of the primary brand color
- * @returns {{ [step: string]: string }} e.g. { "0": "#F9FAFB", "50": "#F3F4F7", … }
+ * @returns {{ [step: string]: string }}
  */
 export function generateNeutralScale(primaryHex) {
-  const { h } = hexToHsl(primaryHex);
-  const SAT = 0.08; // 8% — keeps the neutrals feeling neutral
+  const br = parseInt(primaryHex.slice(1, 3), 16);
+  const bg = parseInt(primaryHex.slice(3, 5), 16);
+  const bb = parseInt(primaryHex.slice(5, 7), 16);
 
-  // [step, lightness] pairs — perceptually balanced across the range
+  const toHex = v => Math.max(0, Math.min(255, Math.round(v))).toString(16).padStart(2, "0");
+
+  // t = 0 → lightest stop,  t = 1 → darkest stop
+  // grayBase slides from 252 (near-white) → 8 (near-black)
+  // brandMix  slides from  4% (subtle tint) → 30% (dominant brand hue)
   const stops = [
-    ["0",   0.975],
-    ["50",  0.955],
-    ["100", 0.930],
-    ["200", 0.878],
-    ["300", 0.798],
-    ["400", 0.695],
-    ["500", 0.525],
-    ["600", 0.415],
-    ["700", 0.298],
-    ["800", 0.182],
-    ["900", 0.102],
-    ["950", 0.056],
+    ["0",   0.00],
+    ["50",  0.05],
+    ["100", 0.12],
+    ["200", 0.22],
+    ["300", 0.34],
+    ["400", 0.47],
+    ["500", 0.57],
+    ["600", 0.66],
+    ["700", 0.76],
+    ["800", 0.85],
+    ["900", 0.92],
+    ["950", 1.00],
   ];
 
-  return Object.fromEntries(
-    stops.map(([step, l]) => [step, hslToHex(h, SAT, l)])
-  );
+  return Object.fromEntries(stops.map(([step, t]) => {
+    const grayBase = 252 - t * (252 - 8);        // 252 → 8
+    const brandMix = 0.04 + t * (0.30 - 0.04);   //  4% → 30%
+
+    const r = grayBase * (1 - brandMix) + br * brandMix;
+    const g = grayBase * (1 - brandMix) + bg * brandMix;
+    const b = grayBase * (1 - brandMix) + bb * brandMix;
+
+    return [step, `#${toHex(r)}${toHex(g)}${toHex(b)}`];
+  }));
+}
+
+/**
+ * Finds the minimum lightness adjustment to fgHex so it achieves
+ * targetRatio contrast against bgHex, preserving hue and saturation.
+ *
+ * Strategy:
+ *  - Determine direction: if bg is light → fg must go darker; if bg is dark → fg must go lighter.
+ *  - Binary search on HSL lightness in [0, currentL] or [currentL, 1].
+ *  - Returns the closest passing color to the original (minimum change).
+ *
+ * @param {string} fgHex      – foreground color to fix
+ * @param {string} bgHex      – background color (unchanged)
+ * @param {number} targetRatio – minimum required contrast (default 4.5 for AA)
+ * @returns {string}           – hex of the adjusted foreground
+ */
+export function findAccessibleColor(fgHex, bgHex, targetRatio = 4.5) {
+  // Already passes — nothing to do
+  if (contrastRatio(fgHex, bgHex) >= targetRatio) return fgHex;
+
+  const bgLum   = luminance(bgHex);
+  const { h, s, l: origL } = hexToHsl(fgHex);
+
+  // Light background → darken fg (search L downward from origL toward 0)
+  // Dark  background → lighten fg (search L upward from origL toward 1)
+  const bgIsLight = bgLum > 0.179;
+
+  let lo = bgIsLight ? 0      : origL;
+  let hi = bgIsLight ? origL  : 1;
+  let best = bgIsLight ? hslToHex(h, s, 0) : hslToHex(h, s, 1);
+
+  for (let i = 0; i < 26; i++) {
+    const mid       = (lo + hi) / 2;
+    const candidate = hslToHex(h, s, mid);
+    if (contrastRatio(candidate, bgHex) >= targetRatio) {
+      best = candidate;
+      // Good — try to get closer to the original (less aggressive adjustment)
+      if (bgIsLight) lo = mid;  // try lighter (higher L)
+      else           hi = mid;  // try darker  (lower L)
+    } else {
+      // Not enough contrast — push further from original
+      if (bgIsLight) hi = mid;  // go darker
+      else           lo = mid;  // go lighter
+    }
+  }
+
+  return best;
 }

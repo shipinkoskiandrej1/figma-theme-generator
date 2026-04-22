@@ -16,25 +16,25 @@ export default function WcagChecker({ theme, onViewFull }) {
 
   return (
     <div style={{
-      background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6,
+      background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 8, boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
       overflow: 'hidden',
     }}>
       {/* Header */}
       <div style={{
-        padding: '14px 18px', borderBottom: `1px solid ${C.b2}`,
+        padding: '20px 24px', borderBottom: `1px solid ${C.b2}`,
         display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        <div style={{ width: 3, height: 14, background: C.accent, borderRadius: 2, flexShrink: 0 }} />
+        <div style={{ width: 3, height: 14, background: C.t1, borderRadius: 2, flexShrink: 0 }} />
         <span style={{ fontSize: 10, fontWeight: 700, color: C.t3, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
           WCAG Summary
         </span>
       </div>
 
       {/* Score cards */}
-      <div style={{ padding: '16px 18px', display: 'flex', flexDirection: 'column', gap: 10 }}>
+      <div style={{ padding: '20px 24px', display: 'flex', flexDirection: 'column', gap: 14 }}>
         {/* AA */}
         <div style={{
-          padding: '16px 20px', borderRadius: 6,
+          padding: '20px 24px', borderRadius: 6,
           background: '#F0FDF4', border: '1px solid #BBF7D0',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
@@ -46,7 +46,7 @@ export default function WcagChecker({ theme, onViewFull }) {
 
         {/* AAA */}
         <div style={{
-          padding: '16px 20px', borderRadius: 6,
+          padding: '20px 24px', borderRadius: 6,
           background: '#F5F3FF', border: '1px solid #DDD6FE',
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
         }}>
@@ -60,13 +60,13 @@ export default function WcagChecker({ theme, onViewFull }) {
         <button
           onClick={onViewFull}
           style={{
-            marginTop: 4, width: '100%', padding: '12px 0',
+            marginTop: 6, width: '100%', padding: '14px 0',
             background: 'transparent', border: `1px solid ${C.b3}`,
             borderRadius: 6, fontSize: 12, fontWeight: 500, fontFamily: C.sans,
             color: C.t3, cursor: 'pointer', transition: 'all .15s',
             letterSpacing: '.01em',
           }}
-          onMouseEnter={e => { e.currentTarget.style.borderColor = C.accent; e.currentTarget.style.color = C.accent; }}
+          onMouseEnter={e => { e.currentTarget.style.borderColor = C.t2; e.currentTarget.style.color = C.t1; }}
           onMouseLeave={e => { e.currentTarget.style.borderColor = C.b3; e.currentTarget.style.color = C.t3; }}
         >
           View Full Analysis →

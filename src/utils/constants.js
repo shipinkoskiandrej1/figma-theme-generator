@@ -1,4 +1,16 @@
+export const FIXED_COLORS = {
+  "color/palette/fixed/white": "#fefefe",
+  "color/palette/fixed/black": "#050505",
+};
+
 export const PRIMITIVE_GROUPS = [
+  {
+    name: "Fixed Colors",
+    vars: [
+      { key: "color/palette/fixed/white", type: "color", desc: "Pure white — never changes" },
+      { key: "color/palette/fixed/black", type: "color", desc: "Pure black — never changes" },
+    ],
+  },
   {
     name: "Brand Primitives",
     vars: [

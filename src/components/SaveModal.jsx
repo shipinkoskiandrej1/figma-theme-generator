@@ -18,8 +18,8 @@ export default function SaveModal({ onSave, onCancel, saving }) {
       }}
     >
       <div style={{
-        background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 6,
-        padding: 24, width: 320, boxShadow: '0 8px 32px rgba(12,18,33,.12)',
+        background: C.bg1, border: `1px solid ${C.b2}`, borderRadius: 10,
+        padding: 28, width: 320, boxShadow: '0 8px 32px rgba(12,18,33,.12)',
         display: 'flex', flexDirection: 'column', gap: 16,
       }}>
         {/* Title */}
@@ -41,12 +41,12 @@ export default function SaveModal({ onSave, onCancel, saving }) {
           placeholder="Client name"
           autoFocus
           style={{
-            height: 34, padding: '0 10px', background: C.bg3,
-            border: `1px solid ${C.b3}`, borderRadius: 4,
+            height: 38, padding: '0 10px', background: C.bg3,
+            border: `1px solid ${C.b3}`, borderRadius: 7,
             color: C.t1, fontSize: 12, fontFamily: C.sans, outline: 'none',
             transition: 'border-color .15s',
           }}
-          onFocus={e => e.target.style.borderColor = C.accent}
+          onFocus={e => e.target.style.borderColor = C.t2}
           onBlur={e => e.target.style.borderColor = C.b3}
         />
 
@@ -55,8 +55,8 @@ export default function SaveModal({ onSave, onCancel, saving }) {
           <button
             onClick={onCancel}
             style={{
-              flex: 1, height: 32, background: 'transparent',
-              border: `1px solid ${C.b3}`, borderRadius: 4,
+              flex: 1, height: 36, background: 'transparent',
+              border: `1px solid ${C.b3}`, borderRadius: 7,
               color: C.t3, fontSize: 11, fontWeight: 500, fontFamily: C.sans,
               cursor: 'pointer', transition: 'border-color .15s',
             }}
@@ -69,10 +69,10 @@ export default function SaveModal({ onSave, onCancel, saving }) {
             onClick={submit}
             disabled={!name.trim() || saving}
             style={{
-              flex: 1, height: 32,
-              background: !name.trim() || saving ? C.b3 : C.accent,
-              border: 'none', borderRadius: 4,
-              color: '#fff', fontSize: 11, fontWeight: 600, fontFamily: C.sans,
+              flex: 1, height: 36,
+              background: !name.trim() || saving ? C.bg3 : C.t1,
+              border: `1px solid ${!name.trim() || saving ? C.b2 : C.t1}`, borderRadius: 7,
+              color: !name.trim() || saving ? C.t4 : '#fff', fontSize: 11, fontWeight: 600, fontFamily: C.sans,
               cursor: !name.trim() || saving ? 'not-allowed' : 'pointer',
               transition: 'background .15s', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6,
             }}

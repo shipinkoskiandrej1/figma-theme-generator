@@ -17,7 +17,7 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
   return (
     <div>
       <div style={{
-        padding: '10px 18px', fontSize: 9, fontWeight: 700, color: C.t5,
+        padding: '12px 22px', fontSize: 9, fontWeight: 700, color: C.t5,
         letterSpacing: '.12em', textTransform: 'uppercase', background: C.bg3,
         borderBottom: `1px solid ${C.b2}`, fontFamily: C.sans,
       }}>
@@ -26,26 +26,30 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
       {group.vars.filter(v => theme[v.key]).map((v, i) => {
         const val = theme[v.key];
         const isEditing = editing === v.key;
+        const isFixed = v.key.startsWith('color/palette/fixed/');
         return (
           <div
             key={v.key}
-            onMouseEnter={e => e.currentTarget.style.background = C.bg3}
+            onMouseEnter={e => { if (!isFixed) e.currentTarget.style.background = C.bg3; }}
             onMouseLeave={e => e.currentTarget.style.background = i % 2 ? C.bg2 : C.bg1}
             style={{
-              display: 'flex', alignItems: 'center', gap: 12, padding: '10px 18px',
+              display: 'flex', alignItems: 'center', gap: 14, padding: '13px 22px',
               background: i % 2 ? C.bg2 : C.bg1,
               borderBottom: `1px solid ${C.b1}`, transition: 'background .1s',
+              opacity: isFixed ? 0.7 : 1,
             }}
           >
             {/* Swatch */}
             {v.type === 'color' && (
               <div
-                style={{ width: 20, height: 20, borderRadius: 4, background: val, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0, cursor: 'pointer', position: 'relative' }}
-                onClick={() => colorRefs.current[v.key]?.click()}
+                style={{ width: 20, height: 20, borderRadius: 4, background: val, border: '1px solid rgba(0,0,0,.1)', flexShrink: 0, cursor: isFixed ? 'default' : 'pointer', position: 'relative' }}
+                onClick={() => !isFixed && colorRefs.current[v.key]?.click()}
               >
-                <input type="color" ref={el => colorRefs.current[v.key] = el} value={val}
-                  onChange={e => onStartEdit(v.key, e.target.value, true)}
-                  style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} />
+                {!isFixed && (
+                  <input type="color" ref={el => colorRefs.current[v.key] = el} value={val}
+                    onChange={e => onStartEdit(v.key, e.target.value, true)}
+                    style={{ position: 'absolute', opacity: 0, width: 0, height: 0, pointerEvents: 'none' }} />
+                )}
               </div>
             )}
 
@@ -60,11 +64,15 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
                 value={editVal}
                 onChange={e => onEditValChange(e.target.value)}
                 onBlur={() => onCommitEdit(v.key)}
-                onKeyDown={e => e.key === 'Enter' && onCommitEdit(v.key)}
+                onKeyDown={e => { if (e.key === 'Enter') onCommitEdit(v.key); if (e.key === 'Escape') { onCommitEdit.__skip = true; onCommitEdit(v.key); } }}
                 autoFocus
                 style={{
-                  width: 86, background: C.bg4, border: `1px solid ${C.accent}`, borderRadius: 3,
-                  padding: '3px 8px', fontFamily: C.mono, fontSize: 11, color: C.t1, letterSpacing: '.04em',
+                  width: v.type === 'font' ? 160 : 86,
+                  background: C.bg4, border: `1px solid ${C.b3}`, borderRadius: 3,
+                  padding: '3px 8px',
+                  fontFamily: v.type === 'font' ? C.sans : C.mono,
+                  fontSize: 11, color: C.t1,
+                  letterSpacing: v.type === 'font' ? 'normal' : '.04em',
                 }}
               />
             ) : (
@@ -73,14 +81,17 @@ function GroupSection({ group, theme, editing, editVal, onStartEdit, onCommitEdi
               </span>
             )}
 
-            {/* Edit button */}
-            {v.type === 'color' && (
+            {/* Edit button — color (non-fixed) and font rows */}
+            {((v.type === 'color' && !isFixed) || v.type === 'font') && (
               <button
                 onClick={() => isEditing ? onCommitEdit(v.key) : onStartEdit(v.key, val)}
-                style={{ background: 'none', border: 'none', color: isEditing ? C.accent : C.t5, fontSize: 13, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0, cursor: 'pointer' }}
+                style={{ background: 'none', border: 'none', color: isEditing ? C.t1 : C.t5, fontSize: 13, padding: '0 2px', lineHeight: 1, transition: 'color .12s', flexShrink: 0, cursor: 'pointer' }}
               >
                 {isEditing ? '✓' : '✎'}
               </button>
+            )}
+            {isFixed && (
+              <span style={{ fontSize: 9, color: C.t5, fontFamily: C.sans, letterSpacing: '.06em', textTransform: 'uppercase' }}>fixed</span>
             )}
 
             {/* Copy */}
@@ -114,7 +125,10 @@ export default function VariableTable({ theme, activeMode, onEdit }) {
   };
 
   const commitEdit = (key) => {
-    if (/^#[0-9A-Fa-f]{6}$/.test(editVal)) onEdit(key, editVal);
+    const isFont = key.startsWith('font/');
+    if (isFont ? editVal.trim() : /^#[0-9A-Fa-f]{6}$/.test(editVal)) {
+      onEdit(key, isFont ? editVal.trim() : editVal);
+    }
     setEditing(null);
   };
 
@@ -125,15 +139,15 @@ export default function VariableTable({ theme, activeMode, onEdit }) {
   const sharedProps = { editing, editVal, onStartEdit: startEdit, onCommitEdit: commitEdit, onEditValChange: setEditVal, copied, onCopy: copyVal, colorRefs };
 
   return (
-    <div style={{ borderRadius: 4, overflow: 'hidden', border: `1px solid ${C.b2}` }}>
+    <div style={{ borderRadius: 8, overflow: 'hidden', border: `1px solid ${C.b2}`, boxShadow: '0 1px 3px rgba(0,0,0,0.05)' }}>
 
       {/* ── PRIMITIVE section header ── */}
       <div style={{
-        padding: '11px 18px', background: C.bg0, borderBottom: `1px solid ${C.b2}`,
-        display: 'flex', alignItems: 'center', gap: 8,
+        padding: '15px 22px', background: C.bg1, borderBottom: `1px solid ${C.b2}`,
+        display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        <div style={{ width: 3, height: 12, background: '#7C3AED', borderRadius: 2 }} />
-        <span style={{ fontSize: 10, fontWeight: 700, color: '#7C3AED', letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+        <div style={{ width: 3, height: 12, background: C.t1, borderRadius: 2 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.t2, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
           Primitive Tokens
         </span>
       </div>
@@ -144,12 +158,12 @@ export default function VariableTable({ theme, activeMode, onEdit }) {
 
       {/* ── SEMANTIC section header ── */}
       <div style={{
-        padding: '11px 18px', background: C.bg0, borderBottom: `1px solid ${C.b2}`,
+        padding: '15px 22px', background: C.bg1, borderBottom: `1px solid ${C.b2}`,
         borderTop: `2px solid ${C.b2}`,
-        display: 'flex', alignItems: 'center', gap: 8,
+        display: 'flex', alignItems: 'center', gap: 10,
       }}>
-        <div style={{ width: 3, height: 12, background: C.accent, borderRadius: 2 }} />
-        <span style={{ fontSize: 10, fontWeight: 700, color: C.accent, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
+        <div style={{ width: 3, height: 12, background: C.t2, borderRadius: 2 }} />
+        <span style={{ fontSize: 10, fontWeight: 700, color: C.t2, letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans }}>
           Semantic Tokens
         </span>
         <span style={{ fontSize: 10, color: C.t4, fontFamily: C.sans, marginLeft: 4 }}>

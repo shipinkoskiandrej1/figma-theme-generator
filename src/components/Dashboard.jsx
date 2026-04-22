@@ -10,7 +10,7 @@ function formatDate(iso) {
 function Skeleton() {
   return (
     <div style={{
-      height: 64, borderRadius: 4, background: C.bg3,
+      height: 72, borderRadius: 8, background: C.bg3,
       animation: 'pulse 1.4s ease-in-out infinite',
     }} />
   );
@@ -38,15 +38,16 @@ function ClientCard({ client, onLoad, onDelete }) {
       onMouseLeave={() => setHovered(false)}
       style={{
         display: 'flex', alignItems: 'center', gap: 14,
-        padding: '12px 16px',
+        padding: '16px 20px',
         background: hovered ? C.bg2 : C.bg1,
         border: `1px solid ${hovered ? C.b3 : C.b2}`,
-        borderRadius: 4, cursor: 'pointer', transition: 'all .15s',
+        borderRadius: 8, cursor: 'pointer', transition: 'all .15s',
+        boxShadow: hovered ? '0 2px 8px rgba(0,0,0,0.08)' : '0 1px 3px rgba(0,0,0,0.04)',
       }}
     >
       {/* Swatch strip */}
       <div style={{
-        width: 72, height: 28, borderRadius: 3, overflow: 'hidden',
+        width: 80, height: 32, borderRadius: 6, overflow: 'hidden',
         border: `1px solid ${C.b2}`, display: 'flex', flexShrink: 0,
       }}>
         {colors.map((c, i) => (
@@ -73,8 +74,8 @@ function ClientCard({ client, onLoad, onDelete }) {
         onClick={handleDelete}
         disabled={deleting}
         style={{
-          width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-          background: 'none', border: `1px solid ${C.b3}`, borderRadius: 3,
+          width: 30, height: 30, display: 'flex', alignItems: 'center', justifyContent: 'center',
+          background: 'none', border: `1px solid ${C.b3}`, borderRadius: 6,
           color: C.t4, cursor: deleting ? 'not-allowed' : 'pointer',
           opacity: deleting ? 0.4 : 1, transition: 'all .15s', flexShrink: 0,
         }}
@@ -115,7 +116,7 @@ export default function Dashboard({ onLoadTheme }) {
   };
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '28px 24px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
+    <div style={{ maxWidth: 720, margin: '0 auto', padding: '36px 36px 80px', display: 'flex', flexDirection: 'column', gap: 16 }}>
 
       {/* Header row */}
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -131,7 +132,7 @@ export default function Dashboard({ onLoadTheme }) {
           onClick={fetchClients}
           style={{
             width: 28, height: 28, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            background: 'transparent', border: `1px solid ${C.b3}`, borderRadius: 3,
+            background: 'transparent', border: `1px solid ${C.b3}`, borderRadius: 6,
             color: C.t4, cursor: 'pointer', transition: 'border-color .15s',
           }}
           title="Refresh"
@@ -150,14 +151,14 @@ export default function Dashboard({ onLoadTheme }) {
       ) : error ? (
         <div style={{
           padding: '12px 16px', background: '#FEF2F2', border: '1px solid #FCA5A5',
-          borderRadius: 4, fontSize: 11, color: '#DC2626', fontFamily: C.sans,
+          borderRadius: 8, fontSize: 11, color: '#DC2626', fontFamily: C.sans,
         }}>
           {error}
         </div>
       ) : clients.length === 0 ? (
         <div style={{
           display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center',
-          padding: '60px 24px', border: `1px dashed ${C.b3}`, borderRadius: 4, textAlign: 'center',
+          padding: '60px 24px', border: `1px dashed ${C.b3}`, borderRadius: 8, textAlign: 'center',
         }}>
           <div style={{ fontSize: 12, fontWeight: 500, color: C.t4, fontFamily: C.sans, marginBottom: 4 }}>
             No saved clients yet

@@ -1,6 +1,5 @@
 import { useState } from "react";
-import Header from "./components/Header";
-import InputStrip from "./components/InputStrip";
+import Sidebar from "./components/Sidebar";
 import ProportionBar from "./components/ProportionBar";
 import VariableTable from "./components/VariableTable";
 import WcagChecker from "./components/WcagChecker";
@@ -10,6 +9,7 @@ import FigmaExport from "./components/FigmaExport";
 import SaveModal from "./components/SaveModal";
 import Dashboard from "./components/Dashboard";
 import { isValidHex, generateNeutralScale } from "./utils/colorUtils";
+import { FIXED_COLORS } from "./utils/constants";
 import { supabase } from "./lib/supabase";
 import { C } from "./utils/theme";
 
@@ -29,7 +29,7 @@ function ModeToggle({ activeMode, onModeChange }) {
           onClick={() => onModeChange(m)}
           style={{
             padding: '5px 18px', border: 'none', borderRadius: 3,
-            background: activeMode === m ? C.accent : 'transparent',
+            background: activeMode === m ? C.t1 : 'transparent',
             color: activeMode === m ? '#fff' : C.t3,
             fontSize: 12, fontWeight: 500, fontFamily: C.sans,
             transition: 'all .12s', cursor: 'pointer', textTransform: 'capitalize',
@@ -49,8 +49,7 @@ export default function App() {
   // Inputs
   const [colors, setColors]               = useState(DEFAULT_COLORS);
   const [mood, setMood]                   = useState("");
-  const [companyName, setCompanyName]     = useState("");
-  const [companyLogo, setCompanyLogo]     = useState("");
+  const [fonts, setFonts]                 = useState({ display: "", body: "" });
   const [collectionName, setCollectionName] = useState("Semantic");
 
   // Output  — theme = { primitives, light, dark }
@@ -237,6 +236,19 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
         parsed.primitives[`color/palette/neutral/${step}`] = hex;
       });
 
+      // Always enforce fixed colors — these never change
+      Object.assign(parsed.primitives, FIXED_COLORS);
+
+      // Override AI fonts with manually specified ones if provided
+      if (fonts.display.trim()) {
+        parsed.light["font/family/display"] = fonts.display.trim();
+        parsed.dark["font/family/display"]  = fonts.display.trim();
+      }
+      if (fonts.body.trim()) {
+        parsed.light["font/family/body"] = fonts.body.trim();
+        parsed.dark["font/family/body"]  = fonts.body.trim();
+      }
+
       setTheme(parsed);
       setAiStatus("✓ Theme generated");
       setActiveTab("Variables");
@@ -266,10 +278,12 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
   const handleLoadTheme = (client) => {
     const loaded = client.theme;
     if (loaded?.primitives) {
+      // Always re-enforce fixed colors even on loaded themes
+      Object.assign(loaded.primitives, FIXED_COLORS);
       setTheme(loaded);
     } else {
       // Legacy flat format — wrap so UI doesn't break
-      setTheme({ primitives: {}, light: loaded || {}, dark: loaded || {} });
+      setTheme({ primitives: { ...FIXED_COLORS }, light: loaded || {}, dark: loaded || {} });
     }
     setView("generator");
     setActiveTab("Variables");
@@ -280,34 +294,22 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
   // ── Tab content ───────────────────────────────────────────────────────────
   const renderTab = () => {
     if (!theme) return (
-      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 12, color: C.t4 }}>
-        <div style={{ width: 44, height: 44, borderRadius: 10, background: C.bg3, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 20 }}>⟡</div>
-        <div style={{ fontSize: 13, fontWeight: 500, color: C.t3, fontFamily: C.sans }}>No theme generated yet</div>
-        <div style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>Enter your three brand colors above and click Generate</div>
+      <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 16, padding: 48 }}>
+        <div style={{ width: 56, height: 56, borderRadius: 14, background: C.bg1, border: `1px solid ${C.b2}`, boxShadow: '0 1px 4px rgba(0,0,0,0.06)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 26 }}>⟡</div>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ fontSize: 15, fontWeight: 600, color: C.t1, fontFamily: C.sans, marginBottom: 6 }}>No theme generated yet</div>
+          <div style={{ fontSize: 12, color: C.t4, fontFamily: C.sans, lineHeight: 1.6 }}>Configure your brand colors in the sidebar<br/>and click Generate Theme to get started.</div>
+        </div>
       </div>
     );
 
     if (activeTab === "Variables") return (
-      <div style={{ display: 'flex', gap: 20, padding: '28px 28px 80px', alignItems: 'flex-start' }}>
-        {/* Left: variable table */}
-        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
-          {/* Mode toggle row */}
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans }}>
-              Editing semantic tokens for <strong style={{ color: C.t2 }}>{activeMode === 'light' ? 'Light' : 'Dark'} Mode</strong>
-            </div>
-            <ModeToggle activeMode={activeMode} onModeChange={setActiveMode} />
-          </div>
+      <div style={{ display: 'flex', gap: 28, padding: '32px 36px 80px', alignItems: 'flex-start' }}>
+        <div style={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 20 }}>
           {saveError && <span style={{ fontSize: 11, color: '#EF4444', fontFamily: C.sans }}>{saveError}</span>}
-          <VariableTable
-            theme={activeFlatTheme}
-            activeMode={activeMode}
-            onEdit={updateThemeToken}
-          />
+          <VariableTable theme={activeFlatTheme} activeMode={activeMode} onEdit={updateThemeToken} />
         </div>
-
-        {/* Right: WCAG summary */}
-        <div style={{ width: 300, flexShrink: 0 }}>
+        <div style={{ width: 320, flexShrink: 0 }}>
           <WcagChecker theme={activeFlatTheme} onViewFull={() => setActiveTab('Accessibility')} />
         </div>
       </div>
@@ -319,23 +321,18 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
         loading={loading}
         activeMode={activeMode}
         onModeChange={setActiveMode}
+        onApplyFix={updateThemeToken}
       />
     );
 
     if (activeTab === "Preview") return (
-      <div style={{ padding: '28px 28px 80px', display: 'flex', flexDirection: 'column', gap: 20 }}>
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ fontSize: 11, color: C.t4, fontFamily: C.sans }}>
-            Previewing <strong style={{ color: C.t2 }}>{activeMode === 'light' ? 'Light' : 'Dark'} Mode</strong>
-          </div>
-          <ModeToggle activeMode={activeMode} onModeChange={setActiveMode} />
-        </div>
-        <LivePreview theme={activeFlatTheme} companyName={companyName} companyLogo={companyLogo} />
+      <div style={{ padding: '32px 36px 80px' }}>
+        <LivePreview theme={activeFlatTheme} />
       </div>
     );
 
     if (activeTab === "Export") return (
-      <div style={{ padding: '28px 28px 80px', maxWidth: 760 }}>
+      <div style={{ padding: '32px 36px 80px', maxWidth: 800 }}>
         <FigmaExport theme={theme} collectionName={collectionName} onCollectionNameChange={setCollectionName} />
       </div>
     );
@@ -355,56 +352,90 @@ Replace every "PRIM" with an exact primitive key from the valid keys list above.
     </div>
   );
 
+  // ── Page title for current view ───────────────────────────────────────────
+  const pageTitle = view === 'dashboard' ? 'Dashboard' : (activeTab || 'Theme Generator');
+  const showModeToggle = view === 'generator' && !!theme && ['Variables', 'Accessibility', 'Preview'].includes(activeTab);
+
   // ── Render ────────────────────────────────────────────────────────────────
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden', background: C.bg0, fontFamily: C.sans }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: C.bg0, fontFamily: C.sans }}>
 
-      <Header
+      {/* ── Sidebar ── */}
+      <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
         generated={!!theme}
         view={view}
         onViewChange={setView}
-        companyName={companyName}
-        companyLogo={companyLogo}
-        aiStatus={aiStatus}
-        loading={loading}
-      />
-
-      <InputStrip
         colors={colors}
         onColorChange={updateColor}
         mood={mood}
         onMoodChange={setMood}
-        companyName={companyName}
-        onCompanyNameChange={setCompanyName}
-        companyLogo={companyLogo}
-        onCompanyLogoChange={setCompanyLogo}
+        fonts={fonts}
+        onFontsChange={setFonts}
         loading={loading}
         onGenerate={generate}
-        generated={!!theme}
         onSave={() => { setSaveError(null); setShowSaveModal(true); }}
+        aiStatus={aiStatus}
       />
 
-      {/* 60/30/10 proportion bar */}
-      {theme && (
-        <div style={{ borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0, padding: '14px 24px' }}>
-          <ProportionBar
-            primary={colors.primary.hex}
-            secondary={colors.secondary.hex}
-            tertiary={colors.tertiary.hex}
-          />
+      {/* ── Main content ── */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+
+        {/* Breadcrumb + page header */}
+        <div style={{
+          padding: '0 36px', borderBottom: `1px solid ${C.b2}`,
+          background: C.bg1, flexShrink: 0,
+        }}>
+          {/* Breadcrumb row */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, paddingTop: 18, paddingBottom: 6 }}>
+            <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>Theme Generator</span>
+            <span style={{ fontSize: 11, color: C.t5, fontFamily: C.sans }}>/</span>
+            <span style={{ fontSize: 11, color: C.t3, fontFamily: C.sans, fontWeight: 500 }}>{pageTitle}</span>
+          </div>
+
+          {/* Title + actions row */}
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBottom: 18 }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+              <h1 style={{ fontSize: 22, fontWeight: 700, color: C.t1, fontFamily: C.sans, margin: 0, lineHeight: 1 }}>
+                {pageTitle}
+              </h1>
+              {theme && view === 'generator' && (
+                <span style={{
+                  padding: '3px 10px', background: C.bg3,
+                  border: `1px solid ${C.b2}`, borderRadius: 99,
+                  fontSize: 11, color: C.t4, fontFamily: C.sans,
+                }}>
+                  Generated
+                </span>
+              )}
+            </div>
+            {showModeToggle && (
+              <ModeToggle activeMode={activeMode} onModeChange={setActiveMode} />
+            )}
+          </div>
         </div>
-      )}
 
-      {errorBanner}
+        {/* Proportion bar */}
+        {theme && view === 'generator' && (
+          <div style={{ padding: '14px 36px', borderBottom: `1px solid ${C.b2}`, background: C.bg1, flexShrink: 0 }}>
+            <ProportionBar
+              primary={colors.primary.hex}
+              secondary={colors.secondary.hex}
+              tertiary={colors.tertiary.hex}
+            />
+          </div>
+        )}
 
-      {/* Scrollable content */}
-      <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column' }}>
-        {view === "dashboard"
-          ? <Dashboard onLoadTheme={handleLoadTheme} />
-          : renderTab()
-        }
+        {errorBanner}
+
+        {/* Scrollable content */}
+        <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', background: C.bg0 }}>
+          {view === 'dashboard'
+            ? <Dashboard onLoadTheme={handleLoadTheme} />
+            : renderTab()
+          }
+        </div>
       </div>
 
       {showSaveModal && (
