@@ -84,21 +84,32 @@ export default function Sidebar({
       height: '100vh', overflow: 'hidden',
     }}>
 
-      {/* ── Logo ── */}
-      <div style={{ padding: '22px 20px 18px', borderBottom: `1px solid ${C.b2}`, flexShrink: 0 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-          <div style={{
-            width: 30, height: 30, borderRadius: 8,
-            background: C.t1,
-            display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-          }}>
-            <span style={{ color: '#fff', fontSize: 12, fontWeight: 700, fontFamily: C.sans }}>FT</span>
+      {/* ── Dark header with logo ── */}
+      <div style={{
+        padding: '24px 22px 22px',
+        background: '#0C1221',
+        borderBottom: '1px solid rgba(255,255,255,0.08)',
+        flexShrink: 0,
+        display: 'flex', flexDirection: 'column', gap: 18,
+      }}>
+        {/* Antibe logo */}
+        <img
+          src="/antibe-logo.png"
+          alt="Antibe"
+          style={{ width: '100%', maxWidth: 160, height: 'auto', display: 'block' }}
+        />
+        {/* Divider */}
+        <div style={{ height: 1, background: 'rgba(255,255,255,0.1)' }} />
+        {/* Tool label */}
+        <div>
+          <div style={{ fontSize: 11, fontWeight: 700, color: 'rgba(255,255,255,0.45)', letterSpacing: '.1em', textTransform: 'uppercase', fontFamily: C.sans, marginBottom: 3 }}>
+            Tool
           </div>
-          <div>
-            <div style={{ fontSize: 13, color: C.t1, fontWeight: 600, fontFamily: C.sans, lineHeight: 1.2 }}>
-              Theme Generator
-            </div>
-            <div style={{ fontSize: 10, color: C.t5, fontFamily: C.sans }}>Design System Builder</div>
+          <div style={{ fontSize: 14, color: '#fff', fontWeight: 600, fontFamily: C.sans, lineHeight: 1.2 }}>
+            Theme Generator
+          </div>
+          <div style={{ fontSize: 10.5, color: 'rgba(255,255,255,0.4)', fontFamily: C.sans, marginTop: 3 }}>
+            Design System Builder
           </div>
         </div>
       </div>
